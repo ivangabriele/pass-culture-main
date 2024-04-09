@@ -6,6 +6,9 @@ class Address(serialization.BaseModel):
     street: str
     postal_code: str
     city: str
+    ban_id: str | None
+    latitude: float | None
+    longitude: float | None
 
     class Config:
         alias_generator = to_camel

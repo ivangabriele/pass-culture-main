@@ -106,6 +106,18 @@ class InseeBackend(BaseBackend):
         # "Entreprise individuelle" or similar
         return " ".join((block["prenom1UniteLegale"], block["nomUniteLegale"]))
 
+    @staticmethod
+    def _no_nd(value: str | None, type_cast: type = str) -> typing.Any:
+        if not value or value == "[ND]":
+            return None
+        return type_cast(value)
+
+    @classmethod
+    def _get_ban_id(cls, value: str | None) -> str | None:
+        if value is None or not value.endswith("_B"):
+            return None
+        return f"{value[:5]}_{value[5:-2]}"
+
     def _get_address_from_siret_data(self, data: dict) -> models.SireneAddress:
         block = data["adresseEtablissement"]
         # Every field is in the response but may be null, for example
@@ -114,20 +126,31 @@ class InseeBackend(BaseBackend):
         city = re.sub(r" \d+ *$", "", block["libelleCommuneEtablissement"] or "")
         return models.SireneAddress(
             street=" ".join(
-                (
-                    block["numeroVoieEtablissement"] or "",
-                    block["typeVoieEtablissement"] or "",
-                    block["libelleVoieEtablissement"] or "",
+                filter(
+                    bool,
+                    (
+                        self._no_nd(block["complementAdresseEtablissement"]),
+                        self._no_nd(block["numeroVoieEtablissement"]),
+                        self._no_nd(block["indiceRepetitionEtablissement"]),
+                        self._no_nd(block["dernierNumeroVoieEtablissement"]),
+                        self._no_nd(block["indiceRepetitionDernierNumeroVoieEtablissement"]),
+                        self._no_nd(block["typeVoieEtablissement"]),
+                        block["libelleVoieEtablissement"],
+                    ),
                 )
             ).strip(),
             postal_code=block["codePostalEtablissement"] or "",
             city=city,
             insee_code=block["codeCommuneEtablissement"] or "",
+            ban_id=self._get_ban_id(self._no_nd(block.get("identifiantAdresseEtablissement"))),
+            latitude=self._no_nd(block.get("coordonneeLambertAbscisseEtablissement"), float),
+            longitude=self._no_nd(block.get("coordonneeLambertOrdonneeEtablissement"), float),
         )
 
     def get_siren(self, siren: str, with_address: bool = True, raise_if_non_public: bool = True) -> models.SirenInfo:
         subpath = f"/siren/{siren}"
         data = self._cached_get(subpath)["uniteLegale"]
+        print(json.dumps(data, indent=4))
         head_office = self._get_head_office(data)
         head_office_siret = siren + head_office["nicSiegeUniteLegale"]
         address = (
@@ -150,6 +173,7 @@ class InseeBackend(BaseBackend):
     def get_siret(self, siret: str, raise_if_non_public: bool = True) -> models.SiretInfo:
         subpath = f"/siret/{siret}"
         data = self._cached_get(subpath)["etablissement"]
+        print(json.dumps(data, indent=4))
         legal_unit_block = data["uniteLegale"]
         try:
             block = [_b for _b in data["periodesEtablissement"] if _b["dateFin"] is None][0]

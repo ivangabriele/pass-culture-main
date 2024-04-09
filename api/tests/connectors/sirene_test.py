@@ -29,6 +29,9 @@ def test_get_siren():
         assert siren_info.address.street == "1 BD POISSONIERE"
         assert siren_info.address.postal_code == "75002"
         assert siren_info.address.city == "PARIS"
+        assert siren_info.address.ban_id == "75109_8393"
+        assert siren_info.address.latitude == 48.871274
+        assert siren_info.address.longitude == 2.345886
         assert siren_info.active
         assert siren_info.diffusible
 
@@ -102,6 +105,13 @@ def test_get_siren_with_non_public_data_do_not_raise():
         assert siren_info.name == "[ND]"
         assert siren_info.active is True
         assert siren_info.diffusible is False
+        assert siren_info.address.street == "[ND]"
+        assert siren_info.address.postal_code == "[ND]"
+        assert siren_info.address.city == "MARSEILLE"
+        assert siren_info.address.insee_code == "13204"
+        assert siren_info.address.latitude is None
+        assert siren_info.address.longitude is None
+        assert siren_info.address.ban_id is None
 
 
 @override_settings(SIRENE_BACKEND="pcapi.connectors.entreprise.backends.insee.InseeBackend")
@@ -132,6 +142,9 @@ def test_get_siret():
         assert siret_info.address.street == "1 BD POISSONIERE"
         assert siret_info.address.postal_code == "75002"
         assert siret_info.address.city == "PARIS"
+        assert siret_info.address.ban_id == "75109_8393"
+        assert siret_info.address.latitude == 48.871274
+        assert siret_info.address.longitude == 2.345886
         assert siret_info.ape_code == "47.61Z"
         assert siret_info.legal_category_code == "5499"
 
@@ -180,6 +193,13 @@ def test_get_siret_with_non_public_data_do_not_raise():
         assert siret_info.name == "[ND]"
         assert siret_info.active is True
         assert siret_info.diffusible is False
+        assert siret_info.address.street == "[ND]"
+        assert siret_info.address.postal_code == "[ND]"
+        assert siret_info.address.city == "MARSEILLE"
+        assert siret_info.address.insee_code == "13204"
+        assert siret_info.address.latitude is None
+        assert siret_info.address.longitude is None
+        assert siret_info.address.ban_id is None
 
 
 @override_settings(SIRENE_BACKEND="pcapi.connectors.entreprise.backends.insee.InseeBackend")

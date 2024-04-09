@@ -15,6 +15,9 @@ class SireneAddress(pydantic_v1.BaseModel):
         postal_code: pydantic_v1.constr(strip_whitespace=True)
         city: pydantic_v1.constr(strip_whitespace=True)
         insee_code: pydantic_v1.constr(strip_whitespace=True)
+    ban_id: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 class SirenInfo(pydantic_v1.BaseModel):

@@ -13,6 +13,9 @@ class TestingBackend(BaseBackend):
         postal_code="75001",
         city="PARIS",
         insee_code="75101",
+        ban_id="75101_9575_00003",
+        latitude=48.863666,
+        longitude=2.337933,
     )
 
     nd_address = models.SireneAddress(
