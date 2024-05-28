@@ -1,6 +1,7 @@
 import { Form, FormikProvider, useFormik } from 'formik'
 import React from 'react'
 import { useDispatch } from 'react-redux'
+import useSWRMutation from 'swr/mutation'
 
 import { api } from 'apiClient/api'
 import { isErrorAPIError } from 'apiClient/helpers'
@@ -21,6 +22,8 @@ export interface UserIdentityFormProps {
   initialValues: UserIdentityFormValues
 }
 
+const PATCH_USER_IDENTITY_QUERY_KEY = 'patchUserIdentity'
+
 export const UserIdentityForm = ({
   closeForm,
   initialValues,
@@ -28,13 +31,26 @@ export const UserIdentityForm = ({
   const { currentUser } = useCurrentUser()
   const dispatch = useDispatch()
 
-  const onSubmit = async (values: UserIdentityFormValues) => {
+  const formik = useFormik({
+    initialValues,
+    onSubmit,
+    validationSchema,
+    validateOnChange: false,
+  })
+
+  const userIdentityMutation = useSWRMutation(
+    PATCH_USER_IDENTITY_QUERY_KEY,
+    (url, { arg }: { arg: UserIdentityFormValues }) =>
+      api.patchUserIdentity(arg)
+  )
+
+  async function onSubmit(values: UserIdentityFormValues) {
     try {
-      const response = await api.patchUserIdentity(values)
+      const result = await userIdentityMutation.trigger(values)
       dispatch(
         updateUser({
           ...currentUser,
-          ...response,
+          ...result,
         })
       )
       closeForm()
@@ -47,13 +63,6 @@ export const UserIdentityForm = ({
     }
     formik.setSubmitting(false)
   }
-
-  const formik = useFormik({
-    initialValues,
-    onSubmit,
-    validationSchema,
-    validateOnChange: false,
-  })
 
   const onCancel = () => {
     formik.resetForm()
