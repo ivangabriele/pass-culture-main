@@ -50,6 +50,8 @@ def retrieve_offer_relations_query(query: sqla_orm.Query) -> sqla_orm.Query:
             sqla_orm.joinedload(offers_models.Offer.priceCategories).joinedload(
                 offers_models.PriceCategory.priceCategoryLabel
             )
+        ).options(
+            sqla_orm.joinedload(offers_models.Offer.futureOffer).load_only(offers_models.FutureOffer.publicationDate)
         )
     )
 

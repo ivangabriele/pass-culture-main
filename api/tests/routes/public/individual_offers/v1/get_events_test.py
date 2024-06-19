@@ -46,9 +46,10 @@ class GetEventsTest:
             withdrawalType=offers_models.WithdrawalTypeEnum.ON_SITE,
         )
 
-        response = client.with_explicit_token(offerers_factories.DEFAULT_CLEAR_API_KEY).get(
-            f"/public/offers/v1/events?limit=5&venueId={venue.id}"
-        )
+        with testing.assert_no_duplicated_queries():
+            response = client.with_explicit_token(offerers_factories.DEFAULT_CLEAR_API_KEY).get(
+                f"/public/offers/v1/events?limit=5&venueId={venue.id}"
+            )
 
         assert response.status_code == 200
         assert len(response.json["events"]) == 2
@@ -65,11 +66,19 @@ class GetEventsTest:
             venue=venue,
             extraData={"showType": "800"},
         )
-        response = client.with_explicit_token(offerers_factories.DEFAULT_CLEAR_API_KEY).get(
-            f"/public/offers/v1/events?limit=5&venueId={venue.id}"
-        )
-        assert response.status_code == 200
-        assert len(response.json["events"]) == 2
+
+        # 1. fetch api key
+        # 2. fetch FF
+        # 3. check that API key is tied to the venue (spoiler: not here)
+        # 4. fetch events
+        num_queries = 4
+        dst = f"/public/offers/v1/events?limit=5&venueId={venue.id}"
+        with testing.assert_num_queries(num_queries):
+            auth_client = client.with_explicit_token(offerers_factories.DEFAULT_CLEAR_API_KEY)
+            response = auth_client.get(dst)
+
+            assert response.status_code == 200
+            assert len(response.json["events"]) == 2
 
     def test_get_events_using_ids_at_provider(self, client):
         id_at_provider_1 = "unBelId"
@@ -102,18 +111,28 @@ class GetEventsTest:
         utils.create_offerer_provider_linked_to_venue()
         unrelated_venue = offerers_factories.VenueFactory()
 
-        response = client.with_explicit_token(offerers_factories.DEFAULT_CLEAR_API_KEY).get(
-            f"/public/offers/v1/events?venueId={unrelated_venue.id}"
-        )
+        # 1. fetch api key
+        # 2. fetch FF
+        # 3. check that API key is tied to the venue (spoiler: not here)
+        num_queries = 3
 
-        assert response.status_code == 404
+        dst = f"/public/offers/v1/events?venueId={unrelated_venue.id}"
+        with testing.assert_num_queries(num_queries):
+            auth_client = client.with_explicit_token(offerers_factories.DEFAULT_CLEAR_API_KEY)
+            response = auth_client.get(dst)
+
+            assert response.status_code == 404
 
     def test_404_when_inactive_venue_provider(self, client):
         venue, _ = utils.create_offerer_provider_linked_to_venue(is_venue_provider_active=False)
         offers_factories.EventOfferFactory(venue=venue)
 
-        response = client.with_explicit_token(offerers_factories.DEFAULT_CLEAR_API_KEY).get(
-            f"/public/offers/v1/events?limit=5&venueId={venue.id}"
-        )
+        # 1. fetch api key
+        # 2. fetch FF
+        # 3. check that API key is tied to the venue (spoiler: not here)
+        num_queries = 3
 
-        assert response.status_code == 404
+        dst = f"/public/offers/v1/events?limit=5&venueId={venue.id}"
+        with testing.assert_num_queries(num_queries):
+            response = client.with_explicit_token(offerers_factories.DEFAULT_CLEAR_API_KEY).get(dst)
+            assert response.status_code == 404
