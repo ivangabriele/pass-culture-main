@@ -16,6 +16,7 @@ from pcapi.routes.public import blueprints
 from pcapi.routes.public import spectree_schemas
 from pcapi.routes.public.documentation_constants import http_responses
 from pcapi.routes.public.documentation_constants import tags
+from pcapi.routes.public.individual_offers import errors
 from pcapi.routes.public.services import authorization
 from pcapi.serialization.decorator import spectree_serialize
 from pcapi.serialization.spec_tree import ExtendResponse as SpectreeResponse
@@ -37,6 +38,37 @@ def _deserialize_has_ticket(
         return offers_models.WithdrawalTypeEnum.NO_TICKET
 
     return None
+
+
+def _create_event(
+    body: serialization.EventOfferCreation,
+    withdrawal_type: offers_models.WithdrawalTypeEnum | None,
+    venue: offerers_models.Venue,
+    venue_provider: providers_models.VenueProvider,
+) -> offers_models.Offer:
+    with utils.handle_unique_id_at_provider():
+        return offers_api.create_offer(
+            audio_disability_compliant=body.accessibility.audio_disability_compliant,
+            booking_contact=body.booking_contact,
+            booking_email=body.booking_email,
+            description=body.description,
+            duration_minutes=body.event_duration,
+            external_ticket_office_url=body.external_ticket_office_url,
+            extra_data=serialization.deserialize_extra_data(body.category_related_fields),
+            is_duo=body.enable_double_bookings,
+            mental_disability_compliant=body.accessibility.mental_disability_compliant,
+            motor_disability_compliant=body.accessibility.motor_disability_compliant,
+            name=body.name,
+            provider=current_api_key.provider,
+            subcategory_id=body.category_related_fields.subcategory_id,
+            url=body.location.url if isinstance(body.location, serialization.DigitalLocation) else None,
+            venue=venue,
+            visual_disability_compliant=body.accessibility.visual_disability_compliant,
+            withdrawal_details=body.withdrawal_details,
+            withdrawal_type=withdrawal_type,
+            id_at_provider=body.id_at_provider,
+            venue_provider=venue_provider,
+        )
 
 
 @blueprints.public_api.route("/public/offers/v1/events", methods=["POST"])
@@ -73,28 +105,8 @@ def post_event_offer(body: serialization.EventOfferCreation) -> serialization.Ev
     withdrawal_type = _deserialize_has_ticket(body.has_ticket, body.category_related_fields.subcategory_id)
     try:
         with repository.transaction():
-            created_offer = offers_api.create_offer(
-                audio_disability_compliant=body.accessibility.audio_disability_compliant,
-                booking_contact=body.booking_contact,
-                booking_email=body.booking_email,
-                description=body.description,
-                duration_minutes=body.event_duration,
-                external_ticket_office_url=body.external_ticket_office_url,
-                extra_data=serialization.deserialize_extra_data(body.category_related_fields),
-                is_duo=body.enable_double_bookings,
-                mental_disability_compliant=body.accessibility.mental_disability_compliant,
-                motor_disability_compliant=body.accessibility.motor_disability_compliant,
-                name=body.name,
-                provider=current_api_key.provider,
-                subcategory_id=body.category_related_fields.subcategory_id,
-                url=body.location.url if isinstance(body.location, serialization.DigitalLocation) else None,
-                venue=venue,
-                visual_disability_compliant=body.accessibility.visual_disability_compliant,
-                withdrawal_details=body.withdrawal_details,
-                withdrawal_type=withdrawal_type,
-                id_at_provider=body.id_at_provider,
-                venue_provider=venue_provider,
-            )
+            event = _create_event(body, withdrawal_type, venue, venue_provider)
+
             # To create the priceCategories, the offer needs to have an id
             db.session.flush()
 
@@ -107,6 +119,13 @@ def post_event_offer(body: serialization.EventOfferCreation) -> serialization.Ev
                 utils.save_image(body.image, created_offer)
 
             offers_api.publish_offer(created_offer, user=None, publication_date=body.publication_date)
+    except errors.ExistingVenueWithIdAtProviderError as error:
+        raise api_errors.ApiErrors({"error": error.msg}, status_code=400)
+    except errors.CreateProductError as error:
+        # This is very unlikely. Therefore, the error should be logged in
+        # order to check that there is no bug on our side.
+        logger.error("Unlikely create event error encountered", extra={"error": error, "body": body})
+        raise api_errors.ApiErrors({"error": error.msg}, status_code=400)
 
     except (
         offers_exceptions.OfferCreationBaseException,

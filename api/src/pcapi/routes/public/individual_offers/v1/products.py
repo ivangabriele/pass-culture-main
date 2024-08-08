@@ -29,6 +29,7 @@ from pcapi.routes.public import blueprints
 from pcapi.routes.public import spectree_schemas
 from pcapi.routes.public.documentation_constants import http_responses
 from pcapi.routes.public.documentation_constants import tags
+from pcapi.routes.public.individual_offers import errors
 from pcapi.routes.public.serialization import venues as venues_serialization
 from pcapi.serialization.decorator import spectree_serialize
 from pcapi.serialization.spec_tree import ExtendResponse as SpectreeResponse
@@ -196,29 +197,9 @@ def get_event_titelive_music_types() -> serialization.GetMusicTypesResponse:
     )
 
 
-class CreateProductError(Exception):
-    msg = "can't create this offer"
-
-
-class CreateProductDBError(CreateProductError):
-    msg = "internal error, can't create this offer"
-
-
-class ExistingVenueWithIdAtProviderError(CreateProductDBError):
-    msg = "`idAtProvider` already exists for this venue, can't create this offer"
-
-
-class CreateStockError(CreateProductError):
-    pass
-
-
-class CreateStockDBError(CreateStockError):
-    pass
-
-
 def _create_product(venue: offerers_models.Venue, body: serialization.ProductOfferCreation) -> offers_models.Offer:
-    try:
-        created_product = offers_api.create_offer(
+    with utils.handle_unique_id_at_provider():
+        return offers_api.create_offer(
             audio_disability_compliant=body.accessibility.audio_disability_compliant,
             booking_contact=body.booking_contact,
             booking_email=body.booking_email,
@@ -237,25 +218,6 @@ def _create_product(venue: offerers_models.Venue, body: serialization.ProductOff
             withdrawal_details=body.withdrawal_details,
             id_at_provider=body.id_at_provider,
         )
-
-        # To create stocks or publishing the offer we need to flush
-        # the session to get the offer id
-        db.session.flush()
-    except sqla_exc.IntegrityError as error:
-        # a unique constraint violation can only mean that the venueId/idAtProvider
-        # already exists
-        is_offer_table = error.orig.diag.table_name == offers_models.Offer.__tablename__
-        is_unique_constraint_violation = error.orig.pgcode == UNIQUE_VIOLATION
-        unique_id_at_provider_venue_id_is_violated = is_offer_table and is_unique_constraint_violation
-
-        if unique_id_at_provider_venue_id_is_violated:
-            raise ExistingVenueWithIdAtProviderError() from error
-        # Other error are unlikely, but we still need to manage them.
-        raise CreateProductDBError() from error
-    except sqla_exc.SQLAlchemyError as error:
-        raise CreateProductDBError() from error
-
-    return created_product
 
 
 def _create_stock(product: offers_models.Offer, body: serialization.ProductOfferCreation) -> None:
@@ -309,9 +271,9 @@ def post_product_offer(body: serialization.ProductOfferCreation) -> serializatio
 
             _create_stock(product=product, body=body)
             offers_api.publish_offer(product, user=None)
-    except ExistingVenueWithIdAtProviderError as error:
+    except errors.ExistingVenueWithIdAtProviderError as error:
         raise api_errors.ApiErrors({"error": error.msg}, status_code=400)
-    except CreateProductError as error:
+    except errors.CreateProductError as error:
         # This is very unlikely. Therefore, the error should be logged in
         # order to check that there is no bug on our side.
         logger.error("Unlikely create product error encountered", extra={"error": error, "body": body})

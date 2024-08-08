@@ -1,5 +1,8 @@
+import contextlib
+
 import sqlalchemy as sqla
 from sqlalchemy import orm as sqla_orm
+import sqlalchemy.exc as sqla_exc
 
 from pcapi.core.offerers import models as offerers_models
 from pcapi.core.offers import api as offers_api
@@ -10,6 +13,7 @@ from pcapi.core.providers import models as providers_models
 from pcapi.models import api_errors
 from pcapi.models import db
 from pcapi.routes.public import utils as public_utils
+from pcapi.routes.public.individual_offers import errors
 from pcapi.utils import image_conversion
 from pcapi.validation.routes.users_authentifications import current_api_key
 
@@ -198,3 +202,25 @@ def load_venue_and_provider_query(query: sqla_orm.Query) -> sqla_orm.Query:
         sqla_orm.joinedload(offers_models.Offer.lastProvider).joinedload(providers_models.Provider.offererProvider),
         sqla_orm.joinedload(offers_models.Offer.venue).load_only(offerers_models.Venue.isVirtual),
     )
+
+
+@contextlib.contextmanager
+def handle_unique_id_at_provider():
+    try:
+        yield
+        # To create stocks or publishing the offer we need to flush
+        # the session to get the offer id
+        db.session.flush()
+    except sqla_exc.IntegrityError as error:
+        # a unique constraint violation can only mean that the venueId/idAtProvider
+        # already exists
+        is_offer_table = error.orig.diag.table_name == offers_models.Offer.__tablename__
+        is_unique_constraint_violation = error.orig.pgcode == UNIQUE_VIOLATION
+        unique_id_at_provider_venue_id_is_violated = is_offer_table and is_unique_constraint_violation
+
+        if unique_id_at_provider_venue_id_is_violated:
+            raise errors.ExistingVenueWithIdAtProviderError() from error
+        # Other error are unlikely, but we still need to manage them.
+        raise errors.CreateProductDBError() from error
+    except sqla_exc.SQLAlchemyError as error:
+        raise errors.CreateProductDBError() from error
