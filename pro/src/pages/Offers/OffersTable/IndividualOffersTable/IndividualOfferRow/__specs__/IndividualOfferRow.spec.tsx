@@ -76,8 +76,8 @@ describe('IndividualOfferRow', () => {
 
       expect(
         within(
-          screen.getAllByRole('link', { name: /éditer l’offre/ })[0]
-        ).getByRole('presentation')
+          screen.getAllByRole('link', { name: /image de l’offre/ })[0]
+        ).getByRole('img')
       ).toHaveAttribute('src', '/my-fake-thumb')
     })
 
@@ -87,7 +87,9 @@ describe('IndividualOfferRow', () => {
       renderOfferItem(props)
 
       expect(
-        screen.getAllByTitle(`${props.offer.name} - éditer l’offre`)[0]
+        screen.getByRole('img', {
+          name: /image de l’offre/,
+        })
       ).toBeInTheDocument()
     })
   })

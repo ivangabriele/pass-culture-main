@@ -39,6 +39,7 @@ export const ThumbCell = ({
           className={classNames(styles['offer-thumb'], {
             [styles['thumb-inactive']]: inactive,
           })}
+          alt={`${offer.name} - image de l’offre`}
         />
       </Link>
     </td>

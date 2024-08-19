@@ -9,9 +9,10 @@ import styles from './Thumb.module.scss'
 interface ThumbProps {
   url?: string | null
   className?: string
+  alt?: string
 }
 
-export const Thumb = ({ url = '', className }: ThumbProps) => {
+export const Thumb = ({ url = '', className, alt = '' }: ThumbProps) => {
   return (
     <div className={styles['thumb-container']}>
       {url ? (
@@ -19,11 +20,11 @@ export const Thumb = ({ url = '', className }: ThumbProps) => {
           className={cn(styles['offer-thumb'], className)}
           loading="lazy"
           src={url}
-          alt=""
+          alt={alt}
         />
       ) : (
         <SvgIcon
-          alt=""
+          alt={alt}
           src={strokeOfferIcon}
           width="48"
           className={cn(styles['default-thumb'], className)}
