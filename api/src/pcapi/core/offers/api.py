@@ -579,7 +579,7 @@ def _update_collective_offer(
 
 
 def batch_update_offers(query: BaseQuery, update_fields: dict, send_email_notification: bool = False) -> None:
-    query = query.filter(models.Offer.validation == models.OfferValidationStatus.APPROVED)
+
     raw_results = query.with_entities(models.Offer.id, models.Offer.venueId).all()
     offer_ids: typing.Sequence[int] = []
     venue_ids: typing.Sequence[int] = []
@@ -600,15 +600,19 @@ def batch_update_offers(query: BaseQuery, update_fields: dict, send_email_notifi
             technical_message_id=technical_message_id,
         )
 
-    batch_size = 1000
-    for current_start_index in range(0, number_of_offers_to_update, batch_size):
-        offer_ids_batch = offer_ids[
-            current_start_index : min(current_start_index + batch_size, number_of_offers_to_update)
-        ]
+    query = query.filter(models.Offer.validation == models.OfferValidationStatus.APPROVED)
 
-        query_to_update = models.Offer.query.filter(models.Offer.id.in_(offer_ids_batch))
+    total_ids = [row[0] for row in base_query.with_entities(Offer.id).yield_per(10_000)]
+    logger.info("batch deactivation: all ids have been loaded (total: %d)", len(total_ids))
+
+    # Avoid too big chunks: it could lock the table too long, lead to a
+    # timeout...
+    for idx, ids in enumerate(get_chunks(total_ids, 500), start=1):
+        query_to_update = models.Offer.query.filter(models.Offer.id.in_(ids))
         query_to_update.update(update_fields, synchronize_session=False)
         db.session.commit()
+
+        logger.info("[%d] %d offers updated", idx, len(ids))
 
         search.async_index_offer_ids(
             offer_ids_batch,
