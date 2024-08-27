@@ -12,3 +12,4 @@ def install_routes(app: Flask) -> None:
     from .endpoints import offers
     from .endpoints import students_levels
     from .endpoints import venues
+    from .endpoints.simulate_adage_steps import bookings as simulate_adage_bookings

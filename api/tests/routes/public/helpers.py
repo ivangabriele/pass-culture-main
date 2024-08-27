@@ -4,12 +4,14 @@ import uuid
 import pytest
 
 from pcapi.core.categories import subcategories_v2 as subcategories
+from pcapi.core.educational import factories as educational_factories
 from pcapi.core.offerers import factories as offerers_factories
 from pcapi.core.offerers import models as offerers_models
 from pcapi.core.offers import factories as offers_factories
 from pcapi.core.offers import models as offers_models
 from pcapi.core.providers import factories as providers_factories
 from pcapi.core.providers import models as providers_models
+from pcapi.core.testing import override_settings
 
 from tests.conftest import TestClient
 
@@ -97,6 +99,12 @@ class PublicAPIEndpointBaseHelper(abc.ABC):
     def setup_venue(self) -> offerers_models.Venue:
         return offerers_factories.VenueFactory()
 
+    # def authenticated_client(self, client):
+    # return client.with_explicit_token(offerers_factories.DEFAULT_CLEAR_API_KEY)
+
+    # def send_request(self, **kwargs):
+    # getattr(self.authenticated_client, self.method)
+
 
 class PublicAPIVenueEndpointHelper(PublicAPIEndpointBaseHelper):
     """
@@ -128,6 +136,41 @@ class PublicAPIVenueEndpointHelper(PublicAPIEndpointBaseHelper):
         venue_provider = providers_factories.VenueProviderFactory(venue=venue, provider=provider)
 
         return plain_api_key, venue_provider
+
+
+class PublicAPIRestrictedEnvHelper(PublicAPIEndpointBaseHelper):
+    @override_settings(IS_PROD=True)
+    def test_should_not_be_usable_from_production_env(self, client):
+        self.assert_not_usable_from_env(client)
+
+    @override_settings(IS_INTEGRATION=True)
+    def test_should_not_be_usable_from_integration_env(self, client):
+        self.assert_not_usable_from_env(client)
+
+    def assert_not_usable_from_env(self, client):
+        plain_api_key, _ = self.setup_provider()
+        authenticated_client = client.with_explicit_token(plain_api_key)
+
+        booking = educational_factories.CollectiveBookingFactory()
+
+        response = self.send_request(
+            authenticated_client, url_params={"booking_id": booking.id}, json={"uai": "123UAI", "redactor_id": 1}
+        )
+
+        assert response.status_code == 403
+        assert "unauthorized action" in response.json["msg"]
+
+    def send_request(self, client, url_params=None, **kwargs):
+        client_func = getattr(client, self.endpoint_method)
+        url = self.endpoint_url
+
+        if self.default_path_params or url_params:
+            default = self.default_path_params if self.default_path_params else {}
+            extra = url_params if url_params else {}
+            params = {**default, **extra}
+            url = url.format(**params)
+
+        return client_func(url, **kwargs)
 
 
 class ProductEndpointHelper:
