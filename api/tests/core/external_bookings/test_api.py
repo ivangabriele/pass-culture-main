@@ -24,6 +24,35 @@ import pcapi.core.users.factories as user_factories
 from pcapi.tasks.serialization.external_api_booking_notification_tasks import BookingAction
 
 
+def build_expected_json_response(offer, stock, booking):
+    return json.dumps(
+        {
+            "booking_confirmation_date": (booking.dateCreated + datetime.timedelta(days=2)).isoformat(),
+            "booking_creation_date": booking.dateCreated.isoformat(),
+            "booking_quantity": booking.quantity,
+            "offer_ean": None,
+            "offer_id": offer.id,
+            "offer_id_at_provider": offer.idAtProvider,
+            "offer_name": offer.name,
+            "offer_price": int(stock.price * 100),
+            "price_category_id": stock.priceCategoryId,
+            "price_category_id_at_provider": stock.priceCategory.idAtProvider,
+            "price_category_label": stock.priceCategory.label,
+            "stock_id": stock.id,
+            "stock_id_at_provider": stock.idAtProviders,
+            "user_birth_date": booking.user.dateOfBirth.strftime("%Y-%m-%d"),
+            "user_email": booking.user.email,
+            "user_first_name": booking.user.firstName,
+            "user_last_name": booking.user.lastName,
+            "user_phone": booking.user.phoneNumber,
+            "venue_address": offer.venue.street,
+            "venue_department_code": offer.venue.departementCode,
+            "venue_id": offer.venue.id,
+            "venue_name": offer.venue.name,
+        }
+    )
+
+
 @pytest.mark.usefixtures("db_session")
 class GetCinemaVenueProviderTest:
     def test_should_return_cinema_venue_provider_according_to_venue_id(self) -> None:
@@ -189,6 +218,37 @@ class BookEventTicketTest:
         )
         assert remaining_quantity == 12
         assert [ticket.barcode for ticket in tickets] == ["1234567AJSQ", "1234567AJSA"]
+
+    @patch("pcapi.core.external_bookings.api.requests.post")
+    def test_should_successfully_book_an_event_without_a_remaining_quantity_set(self, requests_post):
+        booking_creation_date = datetime.datetime(2024, 5, 12)
+        provider = providers_factories.PublicApiProviderFactory()
+        offer = offers_factories.EventOfferFactory(
+            withdrawalType=offers_models.WithdrawalTypeEnum.IN_APP, lastProviderId=provider.id
+        )
+        stock = offers_factories.EventStockFactory(offer=offer)
+        booking = bookings_factories.BookingFactory(stock=stock, dateCreated=booking_creation_date, quantity=1)
+
+        # expected data
+        expected_json_string = build_expected_json_response(offer, stock, booking)
+        expected_hmac_signature = generate_hmac_signature(provider.hmacKey, expected_json_string)
+
+        # mocks
+        requests_post.return_value.status_code = 200
+        requests_post.return_value.json.return_value = {"tickets": [{"barcode": "1234567AJSQ", "seat": "A12"}]}
+
+        # book
+        tickets, remaining_quantity = book_event_ticket(booking, stock, booking.user, provider, None)
+
+        # checks
+        requests_post.assert_called_with(
+            provider.bookingExternalUrl,
+            json=expected_json_string,
+            hmac=expected_hmac_signature,
+            headers={"Content-Type": "application/json"},
+        )
+        assert not remaining_quantity
+        assert {ticket.barcode for ticket in tickets} == {"1234567AJSQ"}
 
     @patch("pcapi.core.external_bookings.api.requests.post")
     def test_should_successfully_book_an_event_ticket_using_venue_external_url(self, requests_post):
