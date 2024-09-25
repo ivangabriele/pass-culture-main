@@ -4,6 +4,7 @@ import random
 from pcapi.core.categories import subcategories_v2
 import pcapi.core.offers.factories as offers_factories
 import pcapi.core.offers.models as offers_models
+from pcapi.core.providers.constants import TITELIVE_MUSIC_GENRES_BY_GTL_ID
 import pcapi.core.providers.factories as providers_factories
 from pcapi.core.providers.titelive_gtl import GTLS
 from pcapi.domain.music_types import MUSIC_SUB_TYPES_BY_SLUG
@@ -83,7 +84,10 @@ def create_industrial_thing_products() -> dict[str, offers_models.Product]:
                     extraData["ean"] = str(base_ean)
                     base_ean += 1
                 elif conditionalField_name == "gtl_id":
-                    extraData["gtl_id"] = random.choice(list(GTLS.keys()))
+                    if thing_subcategory.id in subcategories_v2.MUSIC_SUBCATEGORIES:
+                        extraData["gtl_id"] = random.choice(list(TITELIVE_MUSIC_GENRES_BY_GTL_ID.keys()))
+                    else:
+                        extraData["gtl_id"] = random.choice(list(GTLS.keys()))
                 extra_data_index += 1
             thing_product.extraData = extraData
             thing_products_by_name[name] = thing_product

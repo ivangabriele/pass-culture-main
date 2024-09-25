@@ -286,7 +286,7 @@ def patch_draft_offer(
     rest.check_user_has_access_to_offerer(current_user, offer.venue.managingOffererId)
     try:
         with repository.transaction():
-            if body_extra_data := offers_api.deserialize_extra_data(body.extra_data, offer.subcategoryId):
+            if body_extra_data := offers_api.deserialize_and_validate_extra_data(body.extra_data, offer.subcategoryId):
                 body.extra_data = body_extra_data
             offer = offers_api.update_draft_offer(offer, body)
     except (exceptions.OfferCreationBaseException, exceptions.OfferEditionBaseException) as error:
@@ -318,7 +318,9 @@ def post_offer(body: offers_serialize.PostOfferBodyModel) -> offers_serialize.Ge
             fields = body.dict(by_alias=True)
             fields.pop("venueId")
             fields.pop("address")
-            fields["extraData"] = offers_api.deserialize_extra_data(fields["extraData"], fields["subcategoryId"])
+            fields["extraData"] = offers_api.deserialize_and_validate_extra_data(
+                fields["extraData"], fields["subcategoryId"]
+            )
 
             offer_body = offers_schemas.CreateOffer(**fields)
             offer = offers_api.create_offer(
@@ -427,7 +429,7 @@ def patch_offer(
     try:
         with repository.transaction():
             updates = body.dict(by_alias=True, exclude_unset=True)
-            if body_extra_data := offers_api.deserialize_extra_data(body.extraData, offer.subcategoryId):
+            if body_extra_data := offers_api.deserialize_and_validate_extra_data(body.extraData, offer.subcategoryId):
                 updates["extraData"] = body_extra_data
 
             offer_body = offers_schemas.UpdateOffer(**updates)
