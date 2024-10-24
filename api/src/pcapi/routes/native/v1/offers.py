@@ -1,3 +1,4 @@
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import joinedload
 
 from pcapi.core.categories import subcategories_v2
@@ -45,6 +46,8 @@ def get_offer(offer_id: str) -> serializers.OfferResponse:
 @atomic()
 def get_offer_v2(offer_id: int) -> serializers.OfferResponseV2:
     query = repository.get_offers_details([int(offer_id)])
+    statement = query.statement.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})
+    print(statement)
     offer = query.first_or_404()
 
     if offer.isActive:
