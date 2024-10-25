@@ -82,22 +82,23 @@ class Crash:
         return self.timestamp - datetime.timedelta(minutes=2), self.timestamp
 
 
-def _run_gcloud_logging_query(project: str, query: str) -> list[dict]:
+def _run_gcloud_logging_query(namespace: str, timestamp_from: str, query: str) -> list[dict]:
+    print(" ".join(["kubectl", "logs", "--namespace", namespace, "-l", query]))
+    breakpoint()
     process = subprocess.run(
         [
-            "gcloud",
-            "logging",
-            "--project",
-            project,
-            "--format",
-            "json",
-            "read",
+            "kubectl",
+            "logs",
+            "--namespace",
+            namespace,
+            f"--since-time={timestamp_from}",
+            "-l",
             query,
         ],
         capture_output=True,
     )
     if process.stderr:
-        raise ValueError(f"`gcloud logging` returned an error: {process.stderr}")
+        raise ValueError(f"`kubectl logs` returned an error: {process.stderr}")
     return json.loads(process.stdout)
 
 
@@ -108,32 +109,28 @@ def _ignore_gunicorn_log(log: dict) -> bool:
     return False
 
 
-def get_request_logs(project: str, query: str) -> list[Log]:
+def get_request_logs(env: str, timestamp_from, query: str) -> list[Log]:
     logs = []
-    for raw_log in _run_gcloud_logging_query(project, query):
+    for raw_log in _run_gcloud_logging_query(env, timestamp_from, query):
         if "jsonPayload" in raw_log:  # Flask logs
             method = raw_log["jsonPayload"]["extra"]["method"]
             path = raw_log["jsonPayload"]["extra"]["path"]
             request = f"{method} {path}"
             timestamp = datetime.datetime.fromisoformat(raw_log["timestamp"])
             # Get the timestamp when Flask _started_ to process the request
-            timestamp -= datetime.timedelta(
-                milliseconds=raw_log["jsonPayload"]["extra"]["duration"]
-            )
+            timestamp -= datetime.timedelta(milliseconds=raw_log["jsonPayload"]["extra"]["duration"])
         else:  # Gunicorn logs
             if _ignore_gunicorn_log(raw_log):
                 continue
             request = raw_log["textPayload"].split(" ", 5)[-1]
             timestamp = datetime.datetime.fromisoformat(raw_log["timestamp"])
-        logs.append(
-            Log(insert_id=raw_log["insertId"], timestamp=timestamp, request=request)
-        )
+        logs.append(Log(insert_id=raw_log["insertId"], timestamp=timestamp, request=request))
     return logs
 
 
-def get_crashes(project: str, query: str) -> list[Crash]:
+def get_crashes(env: str, timestamp_from: str, query: str) -> list[Crash]:
     logs = []
-    for raw_log in _run_gcloud_logging_query(project, query):
+    for raw_log in _run_gcloud_logging_query(env, timestamp_from, query):
         message = raw_log["textPayload"]
         pid = CRASH_LOG_REGEXP.match(message).group(1)
         pod = raw_log["resource"]["labels"]["pod_name"]
@@ -148,20 +145,9 @@ def get_crashes(project: str, query: str) -> list[Crash]:
     return logs
 
 
-def build_crash_log_query(env, timestamp_from: str, timestamp_until: str):
-    return " ".join(
-        (
-            f'resource.labels.namespace_name="{env}"',
-            f'timestamp>="{timestamp_from}"',
-            f'timestamp<"{timestamp_until}"',
-            '"was sent SIGKILL"',
-        )
-    )
-
-
 def build_worker_log_query(env: str, crash: Crash) -> str:
     timestamp_from, timestamp_until = crash.window
-    return " ".join(
+    return ",".join(
         (
             f'resource.labels.namespace_name="{env}"',
             f'resource.labels.pod_name="{crash.pod}"',
@@ -174,7 +160,7 @@ def build_worker_log_query(env: str, crash: Crash) -> str:
 
 def build_flask_log_query(env: str, crash: Crash) -> str:
     timestamp_from, timestamp_until = crash.window
-    return " ".join(
+    return ",".join(
         (
             f'resource.labels.namespace_name="{env}"',
             f'resource.labels.pod_name="{crash.pod}"',
@@ -199,12 +185,6 @@ def parse_args():
         help="an ISO-formatted timestamp, in UTC",
         required=True,
     )
-    parser.add_argument(
-        "--timestamp-until",
-        metavar="YYYYMMDDTHH:MM:SS",
-        help="an ISO-formatted timestamp, in UTC",
-        required=True,
-    )
     return parser.parse_args()
 
 
@@ -215,16 +195,12 @@ def analyze_logs(worker_logs, flask_logs):
         for flask_log in flask_logs:
             if worker_log.request != flask_log.request:
                 continue
-            if abs(flask_log.timestamp - worker_log.timestamp) > datetime.timedelta(
-                milliseconds=300
-            ):
+            if abs(flask_log.timestamp - worker_log.timestamp) > datetime.timedelta(milliseconds=300):
                 continue
             mappings[worker_log] = flask_log
             flask_logs.remove(flask_log)
-            continue
-    candidates = [
-        worker_log for worker_log, flask_log in mappings.items() if not flask_log
-    ]
+
+    candidates = [worker_log for worker_log, flask_log in mappings.items() if not flask_log]
     print(f"Found {len(candidates)} candidates for the crash:")
     for candidate in candidates:
         print(candidate)
@@ -235,24 +211,17 @@ def main():
 
     if args.env == "production":
         env = args.env
-        project = "passculture-metier-prod"
     else:
         env = args.env
-        project = "passculture-metier-ehp"
 
-    crashes = get_crashes(
-        project,
-        build_crash_log_query(env, args.timestamp_from, args.timestamp_until),
-    )
+    crashes = get_crashes(env, args.timestamp_from, "")
     print(f"Found {len(crashes)} crashes")
     for crash in crashes:
         print("-" * 10)
-        print(
-            f"Crash of PID {crash.pid} on {crash.pod} at {crash.timestamp.isoformat()}"
-        )
+        print(f"Crash of PID {crash.pid} on {crash.pod} at {crash.timestamp.isoformat()}")
         try:
-            worker_logs = get_request_logs(project, build_worker_log_query(env, crash))
-            flask_logs = get_request_logs(project, build_flask_log_query(env, crash))
+            worker_logs = get_request_logs(env, args.timestamp_from, build_worker_log_query(env, crash))
+            flask_logs = get_request_logs(env, args.timestamp_from, build_flask_log_query(env, crash))
             if not worker_logs:
                 print("No Gunicorn worker logs. Probably a bug in this tool!")
                 continue
