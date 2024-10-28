@@ -167,63 +167,29 @@ disable_error_code = [
 
 
 [tool.pylint.MASTER]
-# Include info messages into score so that pylint fails if we have
-# such messages (e.g. "useless-suppression").
-evaluation = "max(0, 0 if fatal else 10.0 - ((float(5 * error + warning + refactor + convention + info) / statement) * 10))"
-extension-pkg-whitelist = [
-    "pydantic",
-]
-load-plugins = [
-    "pcapi.utils.pylint",
-    "pylint_pydantic",
-]
-ignore-paths = [
-  # Many "too-many-positional-arguments" warnings in tests because of fixtures.
-  # Let's disable pylint for tests since the folder is already excluded in mypy configuration below.
-  "^tests/",
-]
+# Update the path to include the plugins directory
+init-hook = "import sys; sys.path.append('./pylint_plugins')"
+load-plugins = ["pytest_name_checker"]
 
 [tool.pylint."MESSAGES CONTROL"]
-enable = [
-    "use-symbolic-message-instead",
-    "useless-suppression",
+enable = ["invalid-pytest-filename"]
+
+[tool.pylint.pytest-naming]
+allowed-test-file-patterns = [
+    "__init__.py",
+    "conftest.py",
+    "helpers.py",
+    "fixtures.py",
+    "utils.py",
+    "common.py"
 ]
-disable = [
-    "arguments-differ",
-    "arguments-renamed",
-    "attribute-defined-outside-init",
-    "consider-using-f-string",
-    "cyclic-import",
-    "duplicate-code",
-    "fixme",
-    "file-ignored",
-    "import-outside-toplevel",
-    "invalid-name",
-    "line-too-long",
-    "locally-disabled",
-    "missing-docstring",
-    "no-member",
-    "protected-access",
-    "raise-missing-from",
-    "singleton-comparison",
-    "superfluous-parens",
-    "too-few-public-methods",
-    "too-many-ancestors",
-    "too-many-arguments",
-    "too-many-branches",
-    "too-many-instance-attributes",
-    "too-many-lines",
-    "too-many-locals",
-    "too-many-public-methods",
-    "too-many-return-statements",
-    "too-many-statements",
-    "ungrouped-imports",
-    "unnecessary-lambda-assignment",
-    "unused-argument",
-    "use-dict-literal",
-    "wrong-import-order", # we have a custom isort config, which pylint can't grok
-    "wrong-import-position", # same reason
+allowed-test-dirs = [
+    "helpers",
+    "fixtures",
+    "utils",
+    "common"
 ]
+
 
 [tool.pylint.REPORTS]
 msg-template = "{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
