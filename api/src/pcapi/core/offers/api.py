@@ -6,7 +6,7 @@ from functools import partial
 import logging
 import typing
 
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 from psycopg2.errorcodes import CHECK_VIOLATION
 from psycopg2.errorcodes import UNIQUE_VIOLATION
 from psycopg2.extras import DateTimeRange
@@ -530,7 +530,7 @@ def _update_collective_offer(
     return updated_fields
 
 
-def batch_update_offers(query: BaseQuery, update_fields: dict, send_email_notification: bool = False) -> None:
+def batch_update_offers(query: Query, update_fields: dict, send_email_notification: bool = False) -> None:
     query = query.filter(models.Offer.validation == models.OfferValidationStatus.APPROVED)
     raw_results = query.with_entities(models.Offer.id, models.Offer.venueId).all()
     offer_ids: typing.Sequence[int] = []
@@ -587,7 +587,7 @@ def batch_update_offers(query: BaseQuery, update_fields: dict, send_email_notifi
                 )
 
 
-def batch_update_collective_offers(query: BaseQuery, update_fields: dict) -> None:
+def batch_update_collective_offers(query: Query, update_fields: dict) -> None:
     allowed_validation_status = {models.OfferValidationStatus.APPROVED}
     if "dateArchived" in update_fields:
         allowed_validation_status.update((models.OfferValidationStatus.DRAFT, models.OfferValidationStatus.REJECTED))
@@ -612,7 +612,7 @@ def batch_update_collective_offers(query: BaseQuery, update_fields: dict) -> Non
         db.session.commit()
 
 
-def batch_update_collective_offers_template(query: BaseQuery, update_fields: dict) -> None:
+def batch_update_collective_offers_template(query: Query, update_fields: dict) -> None:
     allowed_validation_status = {models.OfferValidationStatus.APPROVED}
     if "dateArchived" in update_fields:
         allowed_validation_status.update((models.OfferValidationStatus.DRAFT, models.OfferValidationStatus.REJECTED))
@@ -1537,7 +1537,7 @@ def fetch_or_update_product_with_titelive_data(titelive_product: models.Product)
     return product
 
 
-def batch_delete_draft_offers(query: BaseQuery) -> None:
+def batch_delete_draft_offers(query: Query) -> None:
     offer_ids = [id_ for id_, in query.with_entities(models.Offer.id)]
     filters = (models.Offer.validation == models.OfferValidationStatus.DRAFT, models.Offer.id.in_(offer_ids))
     models.Mediation.query.filter(models.Mediation.offerId == models.Offer.id).filter(*filters).delete(

@@ -12,7 +12,7 @@ from flask import render_template
 from flask import request
 from flask import url_for
 from flask_login import current_user
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 from markupsafe import Markup
 from markupsafe import escape
 import sqlalchemy as sa
@@ -68,7 +68,7 @@ public_accounts_blueprint = utils.child_backoffice_blueprint(
 )
 
 
-def _load_suspension_info(query: BaseQuery) -> BaseQuery:
+def _load_suspension_info(query: Query) -> Query:
     # Partial joined load with ActionHistory avoids N+1 query to show suspension reason, but the number of fetched rows
     # would be greater than the number of results when a single user has several suspension actions.
     # So these expressions use a subquery so that result count is accurate, and the redirection well forced when a
@@ -79,7 +79,7 @@ def _load_suspension_info(query: BaseQuery) -> BaseQuery:
     )
 
 
-def _apply_search_filters(query: BaseQuery, search_filters: list[str]) -> BaseQuery:
+def _apply_search_filters(query: Query, search_filters: list[str]) -> Query:
     or_filters: list = []
 
     if account_forms.AccountSearchFilter.UNDERAGE.name in search_filters:

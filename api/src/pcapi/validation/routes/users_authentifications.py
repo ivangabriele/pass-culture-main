@@ -3,9 +3,9 @@ import logging
 import typing
 
 import flask
-from flask import _request_ctx_stack
 from flask import g
 from flask import request
+from flask.globals import request_ctx
 from flask_login import current_user
 from werkzeug.local import LocalProxy
 
@@ -155,6 +155,6 @@ def basic_authentication() -> User | None:
         extra={"route": str(request.url_rule), "username": auth.username, "avoid_current_user": True},
     )
     # push the user to the current context - similar to flask-login
-    ctx = _request_ctx_stack.top
+    ctx = request_ctx.top
     ctx.user = user
     return user

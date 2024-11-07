@@ -1,7 +1,7 @@
 import datetime
 import typing
 
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 import sqlalchemy as sa
 from sqlalchemy import and_
 from sqlalchemy import or_
@@ -20,7 +20,7 @@ from pcapi.utils import email as email_utils
 
 def get_bookings(
     *,
-    base_query: BaseQuery,
+    base_query: Query,
     form: BaseBookingListForm,
     stock_class: type[educational_models.CollectiveStock | offers_models.Stock],
     booking_class: type[educational_models.CollectiveBooking | bookings_models.Booking],

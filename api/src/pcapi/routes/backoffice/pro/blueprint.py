@@ -7,7 +7,7 @@ from flask import render_template
 from flask import request
 from flask import url_for
 from flask_login import current_user
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 from markupsafe import Markup
 from sqlalchemy import func
 from werkzeug.exceptions import NotFound
@@ -53,8 +53,8 @@ class Context:
     and venues. Each one has its own context to handle its specificities
     """
 
-    fetch_rows_func: typing.Callable[[str, list[str]], BaseQuery]
-    get_item_base_query: typing.Callable[[int], BaseQuery]
+    fetch_rows_func: typing.Callable[[str, list[str]], Query]
+    get_item_base_query: typing.Callable[[int], Query]
     endpoint: str
     row_id_name: str
 
@@ -290,7 +290,7 @@ def create_offerer() -> utils.BackofficeResponse:
     return redirect(url_for("backoffice_web.offerer.get", offerer_id=user_offerer.offererId), code=303)
 
 
-def _get_connect_as_base_query() -> BaseQuery:
+def _get_connect_as_base_query() -> Query:
     """Returns all user_id to be used as a subquery."""
     return (
         users_models.User.query.with_entities(users_models.User.id)
@@ -304,7 +304,7 @@ def _get_connect_as_base_query() -> BaseQuery:
     )
 
 
-def _get_best_user_id_for_connect_as(query: BaseQuery) -> int | None:
+def _get_best_user_id_for_connect_as(query: Query) -> int | None:
     """Partial workaround to fix connect as when a user as multiple offerers.
 
     The workaround is to try to always select a user with only one offerer when we can

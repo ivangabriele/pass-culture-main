@@ -17,7 +17,7 @@ from flask import render_template
 from flask import request
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import create_refresh_token
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query as BaseQuery
 import sqlalchemy as sa
 from sqlalchemy import func
 from sqlalchemy.orm import Query

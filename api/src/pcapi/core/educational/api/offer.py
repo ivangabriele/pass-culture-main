@@ -3,7 +3,7 @@ from decimal import Decimal
 import logging
 import typing
 
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 from psycopg2.extras import DateTimeRange
 
 from pcapi import settings
@@ -351,11 +351,11 @@ def get_collective_offer_template_by_id_for_adage(
     return educational_repository.get_collective_offer_template_by_id_for_adage(offer_id)
 
 
-def get_query_for_collective_offers_by_ids_for_user(user: User, ids: typing.Iterable[int]) -> BaseQuery:
+def get_query_for_collective_offers_by_ids_for_user(user: User, ids: typing.Iterable[int]) -> Query:
     return educational_repository.get_query_for_collective_offers_by_ids_for_user(user=user, ids=ids)
 
 
-def get_query_for_collective_offers_template_by_ids_for_user(user: User, ids: typing.Iterable[int]) -> BaseQuery:
+def get_query_for_collective_offers_template_by_ids_for_user(user: User, ids: typing.Iterable[int]) -> Query:
     return educational_repository.get_query_for_collective_offers_template_by_ids_for_user(user=user, ids=ids)
 
 
@@ -786,5 +786,5 @@ def get_offer_coordinates(offer: AnyCollectiveOffer) -> tuple[float | Decimal, f
     return latitude, longitude
 
 
-def query_has_any_archived(collective_query: BaseQuery) -> bool:
+def query_has_any_archived(collective_query: Query) -> bool:
     return collective_query.filter(educational_models.CollectiveOffer.isArchived).count() > 0

@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from pprint import pprint
 import sys
+from threading import get_ident as _get_ident
 import typing
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -14,9 +15,11 @@ from flask import Flask
 from flask import g
 from flask.testing import FlaskClient
 from flask_jwt_extended.utils import create_access_token
+import flask_sqlalchemy
 import pytest
 from requests.auth import _basic_auth_str  # pylint: disable=wrong-requests-import
 import requests_mock
+import sqlalchemy as sa
 
 from pcapi import settings
 import pcapi.core.educational.testing as adage_api_testing
@@ -188,6 +191,7 @@ def _db(app):
     """
     mock_db = db
 
+    del app.extensions["sqlalchemy"]
     mock_db.init_app(app)
     install_database_extensions()
     run_migrations()
@@ -558,3 +562,160 @@ class TestClient:
             pprint(result.json)
 
         print("===========================================\n")
+
+
+@pytest.fixture(scope="function")
+def _transaction(request, _db, mocker):
+    """
+    Create a transactional context for tests to run in.
+    """
+
+    def create_session(local_db, options):
+        return sa.orm.sessionmaker(class_=flask_sqlalchemy.session.Session, db=local_db, **options)
+
+    def create_scoped_session(local_db, options=None):
+        scopefunc = _get_ident
+        options = {
+            "query_cls": flask_sqlalchemy.query.Query,
+        }
+        return sa.orm.scoped_session(create_session(local_db, options), scopefunc=scopefunc)
+
+    # Start a transaction
+    connection = _db.engine.connect()
+    transaction = connection.begin()
+
+    # Bind a session to the transaction. The empty `binds` dict is necessary
+    # when specifying a `bind` option, or else Flask-SQLAlchemy won't scope
+    # the connection properly
+    options = dict(bind=connection, binds={})
+    session = create_scoped_session(_db, options=options)
+
+    # Make sure the session, connection, and transaction can't be closed by accident in
+    # the codebase
+    connection.force_close = connection.close
+    transaction.force_rollback = transaction.rollback
+
+    connection.close = lambda: None
+    transaction.rollback = lambda: None
+    session.close = lambda: None
+
+    # Begin a nested transaction (any new transactions created in the codebase
+    # will be held until this outer transaction is committed or closed)
+    session.begin_nested()
+
+    # Each time the SAVEPOINT for the nested transaction ends, reopen it
+    @sa.event.listens_for(session, "after_transaction_end")
+    def restart_savepoint(session, trans):
+        if trans.nested and not trans._parent.nested:
+            # ensure that state is expired the way
+            # session.commit() at the top level normally does
+            session.expire_all()
+
+            session.begin_nested()
+
+    # Force the connection to use nested transactions
+    connection.begin = connection.begin_nested
+
+    # If an object gets moved to the 'detached' state by a call to flush the session,
+    # add it back into the session (this allows us to see changes made to objects
+    # in the context of a test, even when the change was made elsewhere in
+    # the codebase)
+    @sa.event.listens_for(session, "persistent_to_detached")
+    @sa.event.listens_for(session, "deleted_to_detached")
+    def rehydrate_object(session, obj):
+        session.add(obj)
+
+    @request.addfinalizer
+    def teardown_transaction():
+        # Delete the session
+        session.remove()
+
+        # Rollback the transaction and return the connection to the pool
+        transaction.force_rollback()
+        connection.force_close()
+
+    return connection, transaction, session
+
+
+@pytest.fixture(scope="function")
+def _engine(request, _transaction, mocker):
+    """
+    Mock out direct access to the semi-global Engine object.
+    """
+    connection, _, session = _transaction
+
+    # Make sure that any attempts to call `connect()` simply return a
+    # reference to the open connection
+    engine = mocker.MagicMock(spec=sa.engine.Engine)
+
+    engine.connect.return_value = connection
+
+    # References to `Engine.dialect` should redirect to the Connection (this
+    # is primarily useful for the `autoload` flag in SQLAlchemy, which references
+    # the Engine dialect to reflect tables)
+    engine.dialect = connection.dialect
+
+    @contextlib.contextmanager
+    def begin():
+        """
+        Open a new nested transaction on the `connection` object.
+        """
+        with connection.begin_nested():
+            yield connection
+
+    # Force the engine object to use the current connection and transaction
+    engine.begin = begin
+    engine.execute = connection.execute
+
+    # Enforce nested transactions for raw DBAPI connections
+    def raw_connection():
+        # Start a savepoint
+        connection.execute("""SAVEPOINT raw_conn""")
+
+        # Preserve close/commit/rollback methods
+        connection.connection.force_close = connection.connection.close
+        connection.connection.force_commit = connection.connection.commit
+        connection.connection.force_rollback = connection.connection.rollback
+
+        # Prevent the connection from being closed accidentally
+        connection.connection.close = lambda: None
+        connection.connection.commit = lambda: None
+        connection.connection.set_isolation_level = lambda level: None
+
+        # If a rollback is initiated, return to the original savepoint
+        connection.connection.rollback = lambda: connection.execute("""ROLLBACK TO SAVEPOINT raw_conn""")
+
+        return connection.connection
+
+    engine.raw_connection = raw_connection
+
+    session.bind = engine
+
+    @request.addfinalizer
+    def reset_raw_connection():
+        # Return the underlying connection to its original state if it has changed
+        if hasattr(connection.connection, "force_rollback"):
+            connection.connection.commit = connection.connection.force_commit
+            connection.connection.rollback = connection.connection.force_rollback
+            connection.connection.close = connection.connection.force_close
+
+    return engine
+
+
+@pytest.fixture(scope="function")
+def db_session(_engine, _transaction, mocker):
+    """
+    Make sure all the different ways that we access the database in the code
+    are scoped to a transactional context, and return a Session object that
+    can interact with the database in the tests.
+
+    Use this fixture in tests when you would like to use the SQLAlchemy ORM
+    API, just as you might use a SQLAlchemy Session object.
+    """
+    _, _, _session = _transaction
+
+    # Whenever the code tries to access a Flask session, use the Session object
+    # instead
+    mocker.patch("pcapi.models.db.session", new=_session)
+
+    return _session

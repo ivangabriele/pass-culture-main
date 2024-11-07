@@ -5,7 +5,7 @@ from datetime import timedelta
 from decimal import Decimal
 import typing
 
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 import sqlalchemy as sa
 import sqlalchemy.orm as sa_orm
 from sqlalchemy.sql.expression import extract
@@ -207,7 +207,7 @@ def get_educational_year_beginning_at_given_year(year: int) -> educational_model
     return educational_year
 
 
-def _get_bookings_for_adage_base_query() -> BaseQuery:
+def _get_bookings_for_adage_base_query() -> Query:
     query = educational_models.CollectiveBooking.query
     query = query.options(
         sa.orm.joinedload(educational_models.CollectiveBooking.collectiveStock, innerjoin=True)
@@ -409,7 +409,7 @@ def get_paginated_collective_bookings_for_educational_year(
     return query.all()
 
 
-def get_expired_collective_offers_template() -> BaseQuery:
+def get_expired_collective_offers_template() -> Query:
     """Return a query of collective offers template whose latest booking limit occurs within
     the given interval.
     """
@@ -420,7 +420,7 @@ def get_expired_collective_offers_template() -> BaseQuery:
     )
 
 
-def find_expiring_collective_bookings_query() -> BaseQuery:
+def find_expiring_collective_bookings_query() -> Query:
     today_at_midnight = datetime.combine(date.today(), time(0, 0))
 
     return educational_models.CollectiveBooking.query.filter(
@@ -777,7 +777,7 @@ def get_filtered_collective_booking_report(
     status_filter: educational_models.CollectiveBookingStatusFilter | None,
     event_date: datetime | None = None,
     venue_id: int | None = None,
-) -> BaseQuery:
+) -> Query:
     with_entities: tuple[typing.Any, ...] = (
         offerers_models.Venue.common_name.label("venueName"),  # type: ignore[attr-defined]
         offerers_models.Offerer.postalCode.label("offererPostalCode"),
@@ -971,7 +971,7 @@ def get_collective_offer_templates_for_playlist_query(
     playlist_type: educational_models.PlaylistType,
     max_distance: int | None = None,
     min_distance: int | None = None,
-) -> BaseQuery:
+) -> Query:
     query = educational_models.CollectivePlaylist.query.filter(
         educational_models.CollectivePlaylist.type == playlist_type,
         educational_models.CollectivePlaylist.institutionId == institution_id,
@@ -1043,7 +1043,7 @@ def get_collective_offer_by_id_for_adage(offer_id: int) -> educational_models.Co
     return query.filter(educational_models.CollectiveOffer.id == offer_id).one()
 
 
-def _get_collective_offer_template_by_id_for_adage_base_query() -> BaseQuery:
+def _get_collective_offer_template_by_id_for_adage_base_query() -> Query:
     return educational_models.CollectiveOfferTemplate.query.filter(
         educational_models.CollectiveOfferTemplate.validation == offer_mixin.OfferValidationStatus.APPROVED,
     ).options(
@@ -1067,7 +1067,7 @@ def get_collective_offer_template_by_id_for_adage(offer_id: int) -> educational_
     return query.filter(educational_models.CollectiveOfferTemplate.id == offer_id).one()
 
 
-def get_collective_offer_templates_by_ids_for_adage(offer_ids: typing.Collection[int]) -> BaseQuery:
+def get_collective_offer_templates_by_ids_for_adage(offer_ids: typing.Collection[int]) -> Query:
     query = _get_collective_offer_template_by_id_for_adage_base_query()
     # Filter out the archived offers
     query = query.filter(educational_models.CollectiveOfferTemplate.isArchived == False)
@@ -1080,7 +1080,7 @@ def get_collective_offer_templates_by_ids_for_adage(offer_ids: typing.Collection
     return query.filter(educational_models.CollectiveOfferTemplate.id.in_(offer_ids))
 
 
-def get_query_for_collective_offers_by_ids_for_user(user: User, ids: typing.Iterable[int]) -> BaseQuery:
+def get_query_for_collective_offers_by_ids_for_user(user: User, ids: typing.Iterable[int]) -> Query:
     query = educational_models.CollectiveOffer.query
     if not user.has_admin_role:
         query = query.join(offerers_models.Venue, educational_models.CollectiveOffer.venue)
@@ -1091,7 +1091,7 @@ def get_query_for_collective_offers_by_ids_for_user(user: User, ids: typing.Iter
     return query
 
 
-def get_query_for_collective_offers_template_by_ids_for_user(user: User, ids: typing.Iterable[int]) -> BaseQuery:
+def get_query_for_collective_offers_template_by_ids_for_user(user: User, ids: typing.Iterable[int]) -> Query:
     query = educational_models.CollectiveOfferTemplate.query
     if not user.has_admin_role:
         query = query.join(offerers_models.Venue, educational_models.CollectiveOfferTemplate.venue)
@@ -1333,7 +1333,7 @@ def get_user_favorite_offers_from_uai(redactor_id: int | None, uai: str) -> set[
     return {offer.id for offer in query}
 
 
-def get_venue_base_query() -> BaseQuery:
+def get_venue_base_query() -> Query:
     return offerers_models.Venue.query.filter(
         offerers_models.Venue.adageId.is_not(None),
     ).options(sa.orm.joinedload(offerers_models.Venue.adage_addresses))

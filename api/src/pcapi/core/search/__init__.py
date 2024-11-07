@@ -4,7 +4,7 @@ import enum
 import logging
 import typing
 
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 import sqlalchemy as sa
 
 from pcapi import settings
@@ -438,7 +438,7 @@ def index_offers_of_venues_in_queue() -> None:
         logger.exception("Could not index offers of venues from queue")
 
 
-def get_base_query_for_collective_template_offer_indexation() -> BaseQuery:
+def get_base_query_for_collective_template_offer_indexation() -> Query:
     return educational_models.CollectiveOfferTemplate.query.options(
         sa.orm.joinedload(educational_models.CollectiveOfferTemplate.venue, innerjoin=True).joinedload(
             offerers_models.Venue.managingOfferer, innerjoin=True
@@ -446,7 +446,7 @@ def get_base_query_for_collective_template_offer_indexation() -> BaseQuery:
     )
 
 
-def get_base_query_for_offer_indexation() -> BaseQuery:
+def get_base_query_for_offer_indexation() -> Query:
     return (
         # We are only interested in bookable stocks, which means that
         # we can exclude past stocks (which are numerous for recurrent

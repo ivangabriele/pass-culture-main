@@ -4,7 +4,7 @@ import logging
 import operator
 import typing
 
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 import pytz
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
@@ -174,7 +174,7 @@ def get_capped_offers_for_filters(
     return offers
 
 
-def get_offers_by_publication_date(publication_date: datetime.datetime | None = None) -> BaseQuery:
+def get_offers_by_publication_date(publication_date: datetime.datetime | None = None) -> Query:
     if publication_date is None:
         publication_date = datetime.datetime.utcnow()
     publication_date = publication_date.replace(minute=0, second=0, microsecond=0, tzinfo=None)
@@ -182,7 +182,7 @@ def get_offers_by_publication_date(publication_date: datetime.datetime | None = 
     return models.Offer.query.filter(models.Offer.id.in_(future_offers_subquery))
 
 
-def get_offers_by_ids(user: users_models.User, offer_ids: list[int]) -> BaseQuery:
+def get_offers_by_ids(user: users_models.User, offer_ids: list[int]) -> Query:
     query = models.Offer.query
     if not user.has_admin_role:
         query = (
@@ -228,7 +228,7 @@ def get_offers_data_from_top_offers(top_offers: list[dict]) -> list[dict]:
     return sorted_data_list
 
 
-def get_offers_details(offer_ids: list[int]) -> BaseQuery:
+def get_offers_details(offer_ids: list[int]) -> Query:
     return (
         models.Offer.query.options(
             sa_orm.selectinload(models.Offer.stocks)
@@ -277,7 +277,7 @@ def get_offers_by_filters(
     creation_mode: str | None = None,
     period_beginning_date: datetime.date | None = None,
     period_ending_date: datetime.date | None = None,
-) -> BaseQuery:
+) -> Query:
     query = models.Offer.query
 
     if not user_is_admin:
@@ -367,7 +367,7 @@ def get_collective_offers_by_filters(
     period_beginning_date: datetime.date | None = None,
     period_ending_date: datetime.date | None = None,
     formats: list[subcategories.EacFormat] | None = None,
-) -> BaseQuery:
+) -> Query:
     query = educational_models.CollectiveOffer.query
 
     if not user_is_admin:
@@ -456,7 +456,7 @@ def get_collective_offers_template_by_filters(
     period_beginning_date: datetime.date | None = None,
     period_ending_date: datetime.date | None = None,
     formats: list[subcategories.EacFormat] | None = None,
-) -> BaseQuery:
+) -> Query:
     query = educational_models.CollectiveOfferTemplate.query
 
     if period_beginning_date is not None or period_ending_date is not None:
@@ -507,7 +507,7 @@ def get_collective_offers_template_by_filters(
     return query
 
 
-def _filter_by_creation_mode(query: BaseQuery, creation_mode: str) -> BaseQuery:
+def _filter_by_creation_mode(query: Query, creation_mode: str) -> Query:
     if creation_mode == MANUAL_CREATION_MODE:
         query = query.filter(models.Offer.lastProviderId.is_(None))
     if creation_mode == IMPORTED_CREATION_MODE:
@@ -516,22 +516,22 @@ def _filter_by_creation_mode(query: BaseQuery, creation_mode: str) -> BaseQuery:
     return query
 
 
-def _filter_by_status(query: BaseQuery, status: str) -> BaseQuery:
+def _filter_by_status(query: Query, status: str) -> Query:
     return query.filter(models.Offer.status == offer_mixin.OfferStatus[status].name)
 
 
-def _filter_collective_offers_by_statuses(query: BaseQuery, statuses: list[str] | None) -> BaseQuery:
+def _filter_collective_offers_by_statuses(query: Query, statuses: list[str] | None) -> Query:
     """
     Filter a SQLAlchemy query for CollectiveOffers based on a list of statuses.
 
     This function modifies the input query to filter CollectiveOffers based on their CollectiveOfferDisplayedStatus.
 
     Args:
-      query (BaseQuery): The initial query to be filtered.
+      query (Query): The initial query to be filtered.
       statuses (list[str]): A list of status strings to filter by.
 
     Returns:
-      BaseQuery: The modified query with applied filters.
+      Query: The modified query with applied filters.
     """
     on_collective_offer_filters: list = []
     on_booking_status_filter: list = []
@@ -669,8 +669,8 @@ def _filter_collective_offers_by_statuses(query: BaseQuery, statuses: list[str] 
 
 
 def add_last_booking_status_to_collective_offer_query(
-    query: BaseQuery,
-) -> typing.Tuple[BaseQuery, BaseQuery]:
+    query: Query,
+) -> typing.Tuple[Query, Query]:
     last_booking_query = (
         educational_models.CollectiveBooking.query.with_entities(
             educational_models.CollectiveBooking.collectiveStockId,
@@ -870,7 +870,7 @@ def check_stock_consistency() -> list[int]:
     ]
 
 
-def find_event_stocks_happening_in_x_days(number_of_days: int) -> BaseQuery:
+def find_event_stocks_happening_in_x_days(number_of_days: int) -> Query:
     target_day = datetime.datetime.utcnow() + datetime.timedelta(days=number_of_days)
     start = datetime.datetime.combine(target_day, datetime.time.min)
     end = datetime.datetime.combine(target_day, datetime.time.max)
@@ -878,7 +878,7 @@ def find_event_stocks_happening_in_x_days(number_of_days: int) -> BaseQuery:
     return find_event_stocks_day(start, end)
 
 
-def find_event_stocks_day(start: datetime.datetime, end: datetime.datetime) -> BaseQuery:
+def find_event_stocks_day(start: datetime.datetime, end: datetime.datetime) -> Query:
     return (
         models.Stock.query.filter(models.Stock.beginningDatetime.between(start, end))
         .join(bookings_models.Booking)
@@ -887,7 +887,7 @@ def find_event_stocks_day(start: datetime.datetime, end: datetime.datetime) -> B
     )
 
 
-def get_expired_offers(interval: list[datetime.datetime]) -> BaseQuery:
+def get_expired_offers(interval: list[datetime.datetime]) -> Query:
     """Return a query of offers whose latest booking limit occurs within
     the given interval.
 
@@ -1132,7 +1132,7 @@ def offer_has_bookable_stocks(offer_id: int) -> bool:
     ).scalar()
 
 
-def _order_stocks_by(query: BaseQuery, order_by: StocksOrderedBy, order_by_desc: bool) -> BaseQuery:
+def _order_stocks_by(query: Query, order_by: StocksOrderedBy, order_by_desc: bool) -> Query:
     column: sa_orm.Mapped[int] | sa.cast[sa.Date | sa.Time, sa_orm.Mapped[datetime.datetime | None]]
     match order_by:
         case StocksOrderedBy.DATE:
@@ -1163,7 +1163,7 @@ def get_filtered_stocks(
     price_category_id: int | None = None,
     order_by: StocksOrderedBy = StocksOrderedBy.BEGINNING_DATETIME,
     order_by_desc: bool = False,
-) -> BaseQuery:
+) -> Query:
     query = (
         models.Stock.query.join(models.Offer)
         .join(offerers_models.Venue)
@@ -1220,14 +1220,14 @@ def hard_delete_filtered_stocks(
 
 
 def get_paginated_stocks(
-    stocks_query: BaseQuery,
+    stocks_query: Query,
     stocks_limit_per_page: int = LIMIT_STOCKS_PER_PAGE,
     page: int = 1,
-) -> BaseQuery:
+) -> Query:
     return stocks_query.offset((page - 1) * stocks_limit_per_page).limit(stocks_limit_per_page)
 
 
-def get_synchronized_offers_with_provider_for_venue(venue_id: int, provider_id: int) -> BaseQuery:
+def get_synchronized_offers_with_provider_for_venue(venue_id: int, provider_id: int) -> Query:
     return models.Offer.query.filter(models.Offer.venueId == venue_id).filter(
         models.Offer.lastProviderId == provider_id
     )
@@ -1262,7 +1262,7 @@ def get_paginated_offer_ids_by_venue_id(venue_id: int, limit: int, page: int = 0
     return [offer_id for offer_id, in query]
 
 
-def get_offer_price_categories(offer_id: int, id_at_provider_list: list[str] | None = None) -> BaseQuery:
+def get_offer_price_categories(offer_id: int, id_at_provider_list: list[str] | None = None) -> Query:
     """Return price categories for given offer, with the possibility to filter on `idAtProvider`"""
     query = models.PriceCategory.query.filter(
         models.PriceCategory.offerId == offer_id,
@@ -1274,7 +1274,7 @@ def get_offer_price_categories(offer_id: int, id_at_provider_list: list[str] | N
     return query
 
 
-def exclude_offers_from_inactive_venue_provider(query: BaseQuery) -> BaseQuery:
+def exclude_offers_from_inactive_venue_provider(query: Query) -> Query:
     return (
         query.outerjoin(models.Offer.lastProvider)
         .outerjoin(

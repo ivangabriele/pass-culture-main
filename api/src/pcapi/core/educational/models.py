@@ -1847,7 +1847,7 @@ class EducationalDomain(PcObject, Base, Model):
         "Venue", back_populates="collectiveDomains", secondary="educational_domain_venue"
     )
     collectiveOffers: list["CollectiveOffer"] = relationship(
-        "CollectiveOffer", secondary="collective_offer_domain", back_populates="domains"
+        CollectiveOffer, secondary="collective_offer_domain", back_populates="domains"
     )
 
     collectiveOfferTemplates: list["CollectiveOfferTemplate"] = relationship(

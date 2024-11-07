@@ -14,7 +14,7 @@ from flask import request
 from flask import send_file
 from flask import url_for
 from flask_login import current_user
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 from markupsafe import Markup
 from markupsafe import escape
 import sqlalchemy as sa
@@ -294,7 +294,7 @@ def _get_offer_ids_algolia(form: forms.GetOfferAlgoliaSearchForm) -> list[int]:
     return ids
 
 
-def _get_offer_ids_query(form: forms.GetOfferAdvancedSearchForm) -> BaseQuery:
+def _get_offer_ids_query(form: forms.GetOfferAdvancedSearchForm) -> Query:
     query, inner_joins, _, warnings = utils.generate_search_query(
         query=offers_models.Offer.query,
         search_parameters=form.search.data,
@@ -319,7 +319,7 @@ def _get_offer_ids_query(form: forms.GetOfferAdvancedSearchForm) -> BaseQuery:
 
 
 def _get_offers_by_ids(
-    offer_ids: list[int] | BaseQuery, *, sort: str | None = None, order: str | None = None
+    offer_ids: list[int] | Query, *, sort: str | None = None, order: str | None = None
 ) -> list[offers_models.Offer]:
     if utils.has_current_user_permission(perm_models.Permissions.PRO_FRAUD_ACTIONS):
         # Those columns are not shown to fraud pro users

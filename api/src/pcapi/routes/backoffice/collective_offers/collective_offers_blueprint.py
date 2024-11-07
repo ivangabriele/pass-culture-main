@@ -9,7 +9,7 @@ from flask import render_template
 from flask import request
 from flask import url_for
 from flask_login import current_user
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 from markupsafe import escape
 import sqlalchemy as sa
 from werkzeug.datastructures import MultiDict
@@ -131,7 +131,7 @@ JOIN_DICT: dict[str, list[dict[str, typing.Any]]] = {
 }
 
 
-def _get_collective_offer_ids_query(form: forms.GetCollectiveOfferAdvancedSearchForm) -> BaseQuery:
+def _get_collective_offer_ids_query(form: forms.GetCollectiveOfferAdvancedSearchForm) -> Query:
     base_query, inner_joins, _, warnings = utils.generate_search_query(
         query=educational_models.CollectiveOffer.query,
         search_parameters=form.search.data,

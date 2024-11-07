@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 import sqlalchemy as sa
 
 from pcapi.connectors.big_query.queries import InstitutionRuralLevelQuery
@@ -230,7 +230,7 @@ def get_offers_count_for_my_institution(uai: str) -> int:
     return offer_count
 
 
-def get_offers_for_my_institution(uai: str) -> BaseQuery:
+def get_offers_for_my_institution(uai: str) -> Query:
     return (
         educational_models.CollectiveOffer.query.join(
             educational_models.EducationalInstitution, educational_models.CollectiveOffer.institution

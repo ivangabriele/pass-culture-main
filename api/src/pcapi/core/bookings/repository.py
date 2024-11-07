@@ -8,7 +8,7 @@ from io import StringIO
 from operator import and_
 import typing
 
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 import sqlalchemy as sa
 from sqlalchemy import Date
 from sqlalchemy import case
@@ -127,7 +127,7 @@ def find_by_pro_user(
     offerer_address_id: int | None = None,
     page: int = 1,
     per_page_limit: int = 1000,
-) -> tuple[BaseQuery, int]:
+) -> tuple[Query, int]:
     total_bookings_recap = _get_filtered_bookings_count(
         user,
         period=booking_period,
@@ -170,7 +170,7 @@ def token_exists(token: str) -> bool:
     return db.session.query(Booking.query.filter_by(token=token.upper()).exists()).scalar()
 
 
-def find_expiring_individual_bookings_query() -> BaseQuery:
+def find_expiring_individual_bookings_query() -> Query:
     today_at_midnight = datetime.combine(date.today(), time(0, 0))
     return (
         Booking.query.join(Stock)
@@ -189,7 +189,7 @@ def find_expiring_individual_bookings_query() -> BaseQuery:
     )
 
 
-def find_soon_to_be_expiring_individual_bookings_ordered_by_user(given_date: date | None = None) -> BaseQuery:
+def find_soon_to_be_expiring_individual_bookings_ordered_by_user(given_date: date | None = None) -> Query:
     given_date = given_date or date.today()
     books_expiring_date = datetime.combine(given_date, time(0, 0)) + constants.BOOKS_BOOKINGS_EXPIRY_NOTIFICATION_DELAY
     other_expiring_date = datetime.combine(given_date, time(0, 0)) + constants.BOOKINGS_EXPIRY_NOTIFICATION_DELAY
@@ -289,7 +289,7 @@ def get_bookings_from_deposit(deposit_id: int) -> list[Booking]:
     )
 
 
-def _create_export_query(offer_id: int, event_beginning_date: date) -> BaseQuery:
+def _create_export_query(offer_id: int, event_beginning_date: date) -> Query:
     VenueOffererAddress = aliased(OffererAddress)
     VenueAddress = aliased(Address)
 
@@ -429,7 +429,7 @@ def _get_filtered_bookings_query(
     offer_id: int | None = None,
     offerer_address_id: int | None = None,
     extra_joins: tuple[tuple[typing.Any, ...], ...] = (),
-) -> BaseQuery:
+) -> Query:
     VenueOffererAddress = aliased(OffererAddress)
     VenueAddress = aliased(Address)
     bookings_query = (
@@ -601,7 +601,7 @@ def _get_filtered_booking_pro(
     venue_id: int | None = None,
     offer_id: int | None = None,
     offerer_address_id: int | None = None,
-) -> BaseQuery:
+) -> Query:
     VenueOffererAddress = aliased(OffererAddress)
     VenueAddress = aliased(Address)
 
@@ -663,7 +663,7 @@ def _get_filtered_booking_pro(
     return bookings_query
 
 
-def _duplicate_booking_when_quantity_is_two(bookings_recap_query: BaseQuery) -> BaseQuery:
+def _duplicate_booking_when_quantity_is_two(bookings_recap_query: Query) -> Query:
     return bookings_recap_query.union_all(bookings_recap_query.filter(Booking.quantity == DUO_QUANTITY))
 
 
@@ -674,7 +674,7 @@ def _get_booking_status(status: BookingStatus, is_confirmed: bool) -> str:
     return BOOKING_STATUS_LABELS[status]
 
 
-def _write_bookings_to_csv(query: BaseQuery) -> str:
+def _write_bookings_to_csv(query: Query) -> str:
     output = StringIO()
     writer = csv.writer(output, dialect=csv.excel, delimiter=";", quoting=csv.QUOTE_NONNUMERIC)
     writer.writerow(booking_export_header())
@@ -718,7 +718,7 @@ def _write_csv_row(csv_writer: typing.Any, booking: Booking, booking_duo_column:
     )
 
 
-def _write_bookings_to_excel(query: BaseQuery) -> bytes:
+def _write_bookings_to_excel(query: Query) -> bytes:
     output = BytesIO()
     workbook = xlsxwriter.Workbook(output)
 
@@ -782,7 +782,7 @@ def _write_excel_row(
     )
 
 
-def _serialize_csv_report(query: BaseQuery) -> str:
+def _serialize_csv_report(query: Query) -> str:
     output = StringIO()
     writer = csv.writer(output, dialect=csv.excel, delimiter=";", quoting=csv.QUOTE_NONNUMERIC)
     writer.writerow(LEGACY_BOOKING_EXPORT_HEADER)
@@ -819,7 +819,7 @@ def _serialize_csv_report(query: BaseQuery) -> str:
     return output.getvalue()
 
 
-def _serialize_excel_report(query: BaseQuery) -> bytes:
+def _serialize_excel_report(query: Query) -> bytes:
     output = BytesIO()
     workbook = xlsxwriter.Workbook(output)
 

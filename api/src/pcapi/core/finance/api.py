@@ -41,7 +41,7 @@ import zipfile
 from dateutil.relativedelta import relativedelta
 from flask import current_app as app
 from flask import render_template
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 import pytz
 import sqlalchemy as sa
 import sqlalchemy.orm as sqla_orm
@@ -266,9 +266,9 @@ def price_events(
     loops = math.ceil(event_query.count() / batch_size)
 
     def _get_loop_query(
-        query: BaseQuery,
+        query: Query,
         last_event: models.FinanceEvent | None,
-    ) -> BaseQuery:
+    ) -> Query:
         # We cannot use OFFSET and LIMIT because the loop "consumes"
         # events that have been priced (so the query will not return
         # them in the next loop), but keeps events that cannot be
@@ -348,7 +348,7 @@ def get_pricing_point_link(
     raise ValueError(f"Could not find pricing point for booking {booking.id}")
 
 
-def _get_events_to_price(window: tuple[datetime.datetime, datetime.datetime]) -> BaseQuery:
+def _get_events_to_price(window: tuple[datetime.datetime, datetime.datetime]) -> Query:
     return (
         models.FinanceEvent.query.filter(
             models.FinanceEvent.pricingPointId.is_not(None),
@@ -1358,7 +1358,7 @@ def _generate_payments_file(batch: models.CashflowBatch, only_caledonian: bool =
         "Montant net offreur",
     ]
 
-    def get_individual_data(query: BaseQuery) -> BaseQuery:
+    def get_individual_data(query: Query) -> Query:
         individual_data_query = (
             query.filter(bookings_models.Booking.amount != 0)
             .join(bookings_models.Booking.deposit)
@@ -1395,7 +1395,7 @@ def _generate_payments_file(batch: models.CashflowBatch, only_caledonian: bool =
 
         return individual_data_query
 
-    def get_collective_data(query: BaseQuery) -> BaseQuery:
+    def get_collective_data(query: Query) -> Query:
         return (
             query.join(educational_models.CollectiveBooking.collectiveStock)
             .join(models.Pricing.cashflows)
@@ -1614,7 +1614,7 @@ def _make_invoice_lines(
     return lines
 
 
-def _filter_invoiceable_cashflows(query: BaseQuery) -> BaseQuery:
+def _filter_invoiceable_cashflows(query: Query) -> Query:
     return (
         query.filter(models.Cashflow.status == models.CashflowStatus.UNDER_REVIEW).outerjoin(
             models.InvoiceCashflow,
@@ -1810,7 +1810,7 @@ def generate_invoice_file(batch: models.CashflowBatch) -> pathlib.Path:
         "Somme des tickets de facturation",
     ]
 
-    def get_data(query: BaseQuery, bank_accounts: typing.Iterable[int]) -> BaseQuery:
+    def get_data(query: Query, bank_accounts: typing.Iterable[int]) -> Query:
         return (
             query.join(models.Pricing.lines)
             .join(bookings_models.Booking.deposit)
@@ -1837,7 +1837,7 @@ def generate_invoice_file(batch: models.CashflowBatch) -> pathlib.Path:
             )
         )
 
-    def get_collective_data(query: BaseQuery, bank_accounts: typing.Iterable[int]) -> BaseQuery:
+    def get_collective_data(query: Query, bank_accounts: typing.Iterable[int]) -> Query:
         return (
             query.join(models.Pricing.lines)
             .join(educational_models.CollectiveBooking.educationalInstitution)

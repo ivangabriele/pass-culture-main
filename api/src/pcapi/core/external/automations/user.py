@@ -4,7 +4,7 @@ from datetime import datetime
 from math import ceil
 
 from dateutil.relativedelta import relativedelta
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 import sqlalchemy as sa
 
 from pcapi import settings
@@ -21,7 +21,7 @@ YIELD_COUNT_PER_DB_QUERY = 1000
 DAYS_IN_18_YEARS = 365 * 14 + 366 * 4
 
 
-def get_young_users_emails_query() -> BaseQuery:
+def get_young_users_emails_query() -> Query:
     return (
         db.session.query(User.email)
         .yield_per(YIELD_COUNT_PER_DB_QUERY)

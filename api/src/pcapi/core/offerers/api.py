@@ -13,7 +13,7 @@ import secrets
 import time
 import typing
 
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 import jwt
 from psycopg2.extras import NumericRange
 import pytz
@@ -1551,7 +1551,7 @@ def get_venue_by_id(venue_id: int) -> offerers_models.Venue:
     return offerers_repository.get_venue_by_id(venue_id)
 
 
-def search_offerer(search_query: str, departments: typing.Iterable[str] = ()) -> BaseQuery:
+def search_offerer(search_query: str, departments: typing.Iterable[str] = ()) -> Query:
     offerers = models.Offerer.query
 
     search_query = search_query.strip()
@@ -1587,11 +1587,11 @@ def search_offerer(search_query: str, departments: typing.Iterable[str] = ()) ->
     return offerers
 
 
-def get_offerer_base_query(offerer_id: int) -> BaseQuery:
+def get_offerer_base_query(offerer_id: int) -> Query:
     return models.Offerer.query.filter(models.Offerer.id == offerer_id)
 
 
-def search_venue(search_query: str, departments: typing.Iterable[str] = ()) -> BaseQuery:
+def search_venue(search_query: str, departments: typing.Iterable[str] = ()) -> Query:
     venues = models.Venue.query.outerjoin(models.VenueContact).options(
         sa.orm.joinedload(models.Venue.contact),
         sa.orm.joinedload(models.Venue.managingOfferer),
@@ -1670,15 +1670,15 @@ def search_venue(search_query: str, departments: typing.Iterable[str] = ()) -> B
     return venues
 
 
-def get_venue_base_query(venue_id: int) -> BaseQuery:
+def get_venue_base_query(venue_id: int) -> Query:
     return models.Venue.query.outerjoin(offerers_models.VenueContact).filter(models.Venue.id == venue_id)
 
 
-def get_bank_account_base_query(bank_account_id: int) -> BaseQuery:
+def get_bank_account_base_query(bank_account_id: int) -> Query:
     return finance_models.BankAccount.filter(finance_models.BankAccount.id == bank_account_id)
 
 
-def search_bank_account(search_query: str, *_: typing.Any) -> BaseQuery:
+def search_bank_account(search_query: str, *_: typing.Any) -> Query:
     bank_accounts_query = finance_models.BankAccount.query.options(
         sa.orm.joinedload(finance_models.BankAccount.offerer)
     )
@@ -1764,7 +1764,7 @@ def get_offerer_total_revenue(offerer_id: int, only_current_year: bool = False) 
 
 
 def get_offerer_offers_stats(offerer_id: int, max_offer_count: int = 0) -> dict:
-    def _get_query(offer_class: type[offers_api.AnyOffer]) -> BaseQuery:
+    def _get_query(offer_class: type[offers_api.AnyOffer]) -> Query:
         return sa.select(sa.func.jsonb_object_agg(sa.text("status"), sa.text("number"))).select_from(
             sa.select(
                 sa.case(
@@ -1799,7 +1799,7 @@ def get_offerer_offers_stats(offerer_id: int, max_offer_count: int = 0) -> dict:
             .subquery()
         )
 
-    def _max_count_query(offer_class: type[offers_api.AnyOffer]) -> BaseQuery:
+    def _max_count_query(offer_class: type[offers_api.AnyOffer]) -> Query:
         return sa.select(sa.func.count(sa.text("offer_id"))).select_from(
             sa.select(offer_class.id.label("offer_id"))
             .join(offerers_models.Venue, offer_class.venue)
@@ -1860,7 +1860,7 @@ def get_venue_total_revenue(venue_id: int) -> float:
 
 
 def get_venue_offers_stats(venue_id: int, max_offer_count: int = 0) -> dict:
-    def _get_query(offer_class: type[offers_api.AnyOffer]) -> BaseQuery:
+    def _get_query(offer_class: type[offers_api.AnyOffer]) -> Query:
         return sa.select(sa.func.jsonb_object_agg(sa.text("status"), sa.text("number"))).select_from(
             sa.select(
                 sa.case(
@@ -1896,7 +1896,7 @@ def get_venue_offers_stats(venue_id: int, max_offer_count: int = 0) -> dict:
             .subquery()
         )
 
-    def _max_count_query(offer_class: type[offers_api.AnyOffer]) -> BaseQuery:
+    def _max_count_query(offer_class: type[offers_api.AnyOffer]) -> Query:
         return sa.select(sa.func.count(sa.text("offer_id"))).select_from(
             sa.select(offer_class.id.label("offer_id"))
             .filter(offer_class.venueId == venue_id)

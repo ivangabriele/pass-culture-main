@@ -8,7 +8,7 @@ from flask import render_template
 from flask import request
 from flask import url_for
 from flask_login import current_user
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 import sqlalchemy as sa
 from werkzeug.exceptions import Forbidden
 from werkzeug.exceptions import NotFound
@@ -37,7 +37,7 @@ bo_users_blueprint = utils.child_backoffice_blueprint(
 )
 
 
-def _get_bo_user_query(user_id: int) -> BaseQuery:
+def _get_bo_user_query(user_id: int) -> Query:
     return users_models.User.query.filter_by(id=user_id).join(users_models.User.backoffice_profile)
 
 

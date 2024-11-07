@@ -58,7 +58,7 @@ db = flask_sqlalchemy.SQLAlchemy(engine_options=_engine_options)
 # exports better typing.
 if typing.TYPE_CHECKING:
 
-    class Model(flask_sqlalchemy.Model):
+    class Model(flask_sqlalchemy.model.Model):
         pass
 
 else:
