@@ -14,6 +14,7 @@ from pydantic.v1 import validator
 
 from pcapi.core.categories import subcategories_v2 as subcategories
 from pcapi.core.educational import models as educational_models
+from pcapi.core.educational.enum import OfferAddressType
 from pcapi.core.educational import validation as educational_validation
 from pcapi.core.offerers import models as offerers_models
 from pcapi.core.offers import validation as offers_validation
@@ -291,7 +292,7 @@ class GetCollectiveOfferVenueResponseModel(BaseModel):
 
 
 class CollectiveOfferOfferVenueResponseModel(BaseModel):
-    addressType: educational_models.OfferAddressType
+    addressType: OfferAddressType
     otherAddress: str
     venueId: int | None
 
@@ -466,7 +467,7 @@ class CollectiveOfferResponseIdModel(BaseModel):
 
 
 class CollectiveOfferVenueBodyModel(BaseModel):
-    addressType: educational_models.OfferAddressType
+    addressType: OfferAddressType
     otherAddress: str
     venueId: int | None
 
@@ -484,7 +485,7 @@ def is_intervention_area_valid(
     if intervention_area is None:
         return False
 
-    if offer_venue is not None and offer_venue.addressType == educational_models.OfferAddressType.OFFERER_VENUE:
+    if offer_venue is not None and offer_venue.addressType == OfferAddressType.OFFERER_VENUE:
         return True
 
     if len(intervention_area) == 0:

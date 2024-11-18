@@ -82,7 +82,10 @@ def check_offerer_siren_task(payload: CheckOffererSirenRequest) -> None:
             ).one()
 
             with transaction():
-                db.session.add(offerers_models.OffererTagMapping(offererId=offerer.id, tagId=tag.id))
+                db.session.execute(
+                    offerers_models.OffererTagMapping.insert(),
+                    [{"offererId": offerer.id, "tagId": tag.id}],
+                )
                 comment = (
                     "L'entité juridique est détectée comme fermée "
                     + (siren_info.closure_date.strftime("le %d/%m/%Y ") if siren_info.closure_date else "")

@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from pcapi import settings
 from pcapi.core.educational import factories as educational_factories
 import pcapi.core.finance.factories as finance_factories
+from pcapi.core.offerers import base_models
 from pcapi.core.offerers import factories
 from pcapi.core.offerers import models
 import pcapi.core.offerers.schemas as offerers_schemas
@@ -125,18 +126,19 @@ class VenueBannerUrlTest:
         assert venue._bannerUrl == expected_banner_url
 
     @pytest.mark.parametrize(
-        "venue_type_code", (type_code for type_code, banners in models.VENUE_TYPE_DEFAULT_BANNERS.items() if banners)
+        "venue_type_code",
+        (type_code for type_code, banners in base_models.VENUE_TYPE_DEFAULT_BANNERS.items() if banners),
     )
     def test_can_get_category_default_banner_url_when_exists(self, venue_type_code):
         venue = factories.VenueFactory(venueTypeCode=venue_type_code)
 
         banner_base_url, banner_name = venue.bannerUrl.rsplit("/", 1)
-        assert banner_name in models.VENUE_TYPE_DEFAULT_BANNERS[venue_type_code]
+        assert banner_name in base_models.VENUE_TYPE_DEFAULT_BANNERS[venue_type_code]
         assert banner_base_url == f"{settings.OBJECT_STORAGE_URL}/assets/venue_default_images"
 
     @pytest.mark.parametrize(
         "venue_type_code",
-        (type_code for type_code, banners in models.VENUE_TYPE_DEFAULT_BANNERS.items() if not banners),
+        (type_code for type_code, banners in base_models.VENUE_TYPE_DEFAULT_BANNERS.items() if not banners),
     )
     def test_cannot_get_category_default_banner_if_not_available(self, venue_type_code):
         venue = factories.VenueFactory(venueTypeCode=venue_type_code)

@@ -33,6 +33,7 @@ import pcapi.core.criteria.models as criteria_models
 from pcapi.core.educational import exceptions as educational_exceptions
 from pcapi.core.educational import models as educational_models
 from pcapi.core.educational import utils as educational_utils
+from pcapi.core.educational.enum import OfferAddressType
 from pcapi.core.educational import validation as educational_validation
 from pcapi.core.educational.api import offer as educational_api_offer
 import pcapi.core.educational.api.national_program as national_program_api
@@ -542,11 +543,11 @@ def _update_collective_offer(
     offer_venue = new_values.get("offerVenue")
     if offer_venue:
         match offer_venue["addressType"]:
-            case educational_models.OfferAddressType.SCHOOL:
+            case OfferAddressType.SCHOOL:
                 new_values["locationType"] = educational_models.CollectiveLocationType.SCHOOL
                 new_values["offererAddressId"] = None
 
-            case educational_models.OfferAddressType.OFFERER_VENUE:
+            case OfferAddressType.OFFERER_VENUE:
                 new_values["locationType"] = educational_models.CollectiveLocationType.VENUE
                 location_venue = offerers_repository.get_venue_by_id(offer_venue["venueId"])
                 rest.check_user_has_access_to_offerer(user, offerer_id=location_venue.managingOffererId)
@@ -1324,7 +1325,6 @@ def add_criteria_to_offers(
 
     return True
 
-
 def reject_inappropriate_products(
     eans: list[str],
     author: users_models.User | None,
@@ -1752,8 +1752,8 @@ def batch_delete_draft_offers(query: BaseQuery) -> None:
     models.Mediation.query.filter(models.Mediation.offerId == models.Offer.id).filter(*filters).delete(
         synchronize_session=False
     )
-    criteria_models.OfferCriterion.query.filter(
-        criteria_models.OfferCriterion.offerId == models.Offer.id,
+    db.session.query(criteria_models.OfferCriterion).filter(
+        criteria_models.OfferCriterion.c.offerId == models.Offer.id,
         *filters,
     ).delete(synchronize_session=False)
     models.ActivationCode.query.filter(
