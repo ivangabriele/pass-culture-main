@@ -9,6 +9,7 @@ from pydantic.v1 import condecimal
 from pydantic.v1.types import NonNegativeInt
 
 from pcapi.core.offers import models
+from pcapi.core.offers.exceptions import MaxStockPerOfferExceeded
 from pcapi.routes.serialization import BaseModel
 from pcapi.serialization.utils import to_camel
 from pcapi.utils.date import format_into_utc_date
@@ -63,12 +64,15 @@ class StockIdResponseModel(BaseModel):
 
 class StocksUpsertBodyModel(BaseModel):
     offer_id: int
-    if typing.TYPE_CHECKING:
-        stocks: list[StockCreationBodyModel | StockEditionBodyModel]
-    else:
-        stocks: pydantic_v1.conlist(
-            StockCreationBodyModel | StockEditionBodyModel, min_items=1, max_items=models.Offer.MAX_STOCKS_PER_OFFER
-        )
+    stocks: list[StockCreationBodyModel | StockEditionBodyModel]
+
+    @pydantic_v1.validator("stocks")
+    def check_max_stocks_per_offer_limit(
+        cls, value: list[StockCreationBodyModel | StockEditionBodyModel]
+    ) -> list[StockCreationBodyModel | StockEditionBodyModel]:
+        if len(value) > models.Offer.MAX_STOCKS_PER_OFFER:
+            raise MaxStockPerOfferExceeded()
+        return value
 
     class Config:
         alias_generator = to_camel

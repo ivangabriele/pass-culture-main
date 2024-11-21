@@ -12,6 +12,7 @@ from pcapi.core.offerers.models import Venue
 import pcapi.core.offerers.repository as offerers_repository
 from pcapi.core.offers import exceptions as offers_exceptions
 import pcapi.core.offers.api as offers_api
+from pcapi.core.offers.exceptions import MaxStockPerOfferExceeded
 import pcapi.core.offers.models as offers_models
 import pcapi.core.offers.validation as offers_validation
 from pcapi.models.api_errors import ApiErrors
@@ -123,14 +124,7 @@ def upsert_stocks(
     if stocks_to_create:
         number_of_existing_stocks = _get_number_of_existing_stocks(body.offer_id)
         if number_of_existing_stocks + len(stocks_to_create) > offers_models.Offer.MAX_STOCKS_PER_OFFER:
-            raise ApiErrors(
-                {
-                    "stocks": [
-                        "Le nombre maximum de stocks par offre est de %s" % offers_models.Offer.MAX_STOCKS_PER_OFFER
-                    ]
-                },
-                status_code=400,
-            )
+            raise MaxStockPerOfferExceeded()
 
     price_categories = {price_category.id: price_category for price_category in offer.priceCategories}
 

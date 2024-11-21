@@ -1,5 +1,6 @@
 import typing
 
+from pcapi.core.offers.models import Offer
 from pcapi.domain.client_exceptions import ClientError
 from pcapi.models.api_errors import ApiErrors
 
@@ -242,6 +243,11 @@ class ThumbnailStorageError(ApiErrors):
 
 class StockDoesNotExist(ApiErrors):
     status_code = 400
+
+
+class MaxStockPerOfferExceeded(ApiErrors):
+    def __init__(self) -> None:
+        super().__init__({"stocks": ["Le nombre maximum de stocks par offre est de %s" % Offer.MAX_STOCKS_PER_OFFER]})
 
 
 class OfferReportError(Exception):
