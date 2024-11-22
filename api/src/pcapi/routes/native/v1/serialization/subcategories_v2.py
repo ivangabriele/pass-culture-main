@@ -50,6 +50,7 @@ class NativeCategoryResponseModelv2(BaseModel):
     value: str | None
     genre_type: subcategories_v2.GenreType | None
     parents: list[subcategories_v2.SearchGroupNameEnumv2]
+    position: int | None
 
     class Config:
         alias_generator = to_camel
@@ -70,6 +71,7 @@ class GenreTypeModel(BaseModel):
     name: subcategories_v2.GenreType
     values: list[GenreTypeContentModel]
     trees: list[BookType] | list[MusicType] | list[ShowType] | list[MovieType]
+    position: int | None
 
     class Config:
         alias_generator = to_camel
