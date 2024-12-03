@@ -25,7 +25,7 @@ import pcapi.core.offerers.models as offerers_models
 import pcapi.core.offers.models as offers_models
 from pcapi.core.offers.utils import get_offer_address
 from pcapi.core.providers import titelive_gtl
-from pcapi.core.providers.constants import TITELIVE_MUSIC_GENRES_BY_GTL_ID
+from pcapi.core.providers.constants import TITELIVE_MUSIC_LABELS_BY_GTL_ID
 from pcapi.core.search import SearchError
 from pcapi.core.search.backends import base
 from pcapi.domain.music_types import MUSIC_TYPES_LABEL_BY_CODE
@@ -478,11 +478,11 @@ class AlgoliaBackend(base.SearchBackend):
         gtl_id = extra_data.get("gtl_id")
 
         music_type_labels = []
+        if gtl_id and gtl_id in TITELIVE_MUSIC_LABELS_BY_GTL_ID:
+            music_type_labels.append(TITELIVE_MUSIC_LABELS_BY_GTL_ID[gtl_id])
+
         music_type = (extra_data.get("musicType") or "").strip()
         if music_type:
-            if gtl_id and gtl_id in TITELIVE_MUSIC_GENRES_BY_GTL_ID:
-                music_type_labels.append(TITELIVE_MUSIC_GENRES_BY_GTL_ID[gtl_id])
-
             try:
                 music_type_labels.append(MUSIC_TYPES_LABEL_BY_CODE[int(music_type)])
             except (ValueError, KeyError, TypeError):
@@ -605,10 +605,7 @@ class AlgoliaBackend(base.SearchBackend):
             object_to_index["offer"]["gtl_level2"] = gtl.get("level_02_label")
             object_to_index["offer"]["gtl_level3"] = gtl.get("level_03_label")
             object_to_index["offer"]["gtl_level4"] = gtl.get("level_04_label")
-        elif gtl_id and offer.subcategory.category.id in (
-            categories.MUSIQUE_ENREGISTREE.id,
-            categories.MUSIQUE_LIVE.id,
-        ):
+        elif gtl_id and offer.subcategory.id in subcategories_v2.MUSIC_SUBCATEGORIES:
             gtl_label = next(
                 (music_type.label for music_type in categories.TITELIVE_MUSIC_TYPES if music_type.gtl_id == gtl_id),
                 None,

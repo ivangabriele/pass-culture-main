@@ -366,6 +366,7 @@ def test_use_titelive_music_type_if_offer_is_music():
     )
     offer = offers_factories.OfferFactory(product=product)
     serialized = algolia.AlgoliaBackend().serialize_offer(offer, 0)
+    assert serialized["offer"]["musicType"] == ["Musique Classique"]
     assert serialized["offer"]["gtl_level1"] == "Musique Classique"
     assert "gtl_level2" not in serialized["offer"]
     assert "gtl_level3" not in serialized["offer"]

@@ -1803,6 +1803,45 @@ class OffersV2Test:
         assert response.status_code == 200
         assert response.json["extraData"]["bookFormat"] == "MOYEN FORMAT"
 
+    def test_offer_extra_data_book_gtl(self, client):
+        extra_data = {"gtl_id": "01000000"}
+        offer = offers_factories.OfferFactory(subcategoryId=subcategories.LIVRE_PAPIER.id, extraData=extra_data)
+
+        offer_id = offer.id
+        nb_queries = 1  # select offer
+        nb_queries += 1  # select stocks
+        nb_queries += 1  # select mediations
+        with assert_num_queries(nb_queries):
+            response = client.get(f"/native/v2/offer/{offer_id}")
+        assert response.status_code == 200
+        assert response.json["extraData"]["gtlLabels"] == {
+            "label": "Littérature",
+            "level01Label": "Littérature",
+            "level02Label": None,
+            "level03Label": None,
+            "level04Label": None,
+        }
+
+    def test_offer_extra_data_music_gtl(self, client):
+        extra_data = {"gtl_id": "01000000"}
+        offer = offers_factories.OfferFactory(subcategoryId=subcategories.CONCERT.id, extraData=extra_data)
+
+        offer_id = offer.id
+        nb_queries = 1  # select offer
+        nb_queries += 1  # select stocks
+        nb_queries += 1  # select mediations
+        with assert_num_queries(nb_queries + 1):
+            response = client.get(f"/native/v2/offer/{offer_id}")
+        assert response.status_code == 200
+        assert response.json["extraData"]["musicType"] == "Musique Classique"
+        assert response.json["extraData"]["gtlLabels"] == {
+            "label": "Musique Classique",
+            "level01Label": "Musique Classique",
+            "level02Label": None,
+            "level03Label": None,
+            "level04Label": None,
+        }
+
 
 class OffersStocksTest:
     def test_return_empty_on_empty_request(self, client):

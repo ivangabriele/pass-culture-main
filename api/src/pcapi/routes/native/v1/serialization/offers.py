@@ -10,6 +10,7 @@ from pydantic.v1.fields import Field
 from pydantic.v1.utils import GetterDict
 
 from pcapi.core.bookings.api import compute_booking_cancellation_limit_date
+from pcapi.core.categories import categories
 from pcapi.core.categories import subcategories_v2 as subcategories
 from pcapi.core.geography.models import Address
 from pcapi.core.offerers import models as offerers_models
@@ -206,7 +207,7 @@ class OfferImageResponse(BaseModel):
         orm_mode = True
 
 
-def get_gtl_labels(gtl_id: str) -> GtlLabels | None:
+def get_book_gtl_labels(gtl_id: str) -> GtlLabels | None:
     if gtl_id not in GTLS:
         return None
     gtl_infos = GTLS[gtl_id]
@@ -219,8 +220,20 @@ def get_gtl_labels(gtl_id: str) -> GtlLabels | None:
             level03Label=gtl_infos.get("level_03_label"),
             level04Label=gtl_infos.get("level_04_label"),
         )
-    logger.error("GTL label not found for id %s", gtl_id)
+    logger.error("Book GTL label not found for id %s", gtl_id)
     return None
+
+
+def get_music_gtl_labels(gtl_id: str) -> GtlLabels | None:
+    gtl_label = next(
+        (music_type.label for music_type in categories.TITELIVE_MUSIC_TYPES if music_type.gtl_id == gtl_id),
+        None,
+    )
+    if not gtl_label:
+        logger.error("Music GTL label not found for id %s", gtl_id)
+        return None
+
+    return GtlLabels(label=gtl_label, level01Label=gtl_label, level02Label=None, level03Label=None, level04Label=None)
 
 
 BaseOfferResponseType = TypeVar("BaseOfferResponseType", bound="BaseOfferResponse")
@@ -278,7 +291,11 @@ class BaseOfferResponseGetterDict(GetterDict):
 
             gtl_id = raw_extra_data.get("gtl_id")
             if gtl_id is not None:
-                extra_data.gtlLabels = get_gtl_labels(gtl_id)
+                if offer.subcategoryId == subcategories.LIVRE_PAPIER.id:
+                    extra_data.gtlLabels = get_book_gtl_labels(gtl_id)
+                elif offer.subcategoryId in subcategories.MUSIC_SUBCATEGORIES:
+                    extra_data.gtlLabels = get_music_gtl_labels(gtl_id)
+                    extra_data.musicType = provider_constants.TITELIVE_MUSIC_LABELS_BY_GTL_ID[gtl_id]
 
             return extra_data
 
