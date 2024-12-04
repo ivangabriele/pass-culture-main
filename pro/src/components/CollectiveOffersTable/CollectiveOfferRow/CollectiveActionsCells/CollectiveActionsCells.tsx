@@ -271,7 +271,7 @@ export const CollectiveActionsCells = ({
     : offer.isShowcase &&
       ![
         CollectiveOfferDisplayedStatus.DRAFT,
-        CollectiveOfferDisplayedStatus.PENDING,
+        // CollectiveOfferDisplayedStatus.PENDING,
       ].includes(offer.displayedStatus)
 
   const canArchiveOffer = areCollectiveNewStatusesEnabled
@@ -302,7 +302,7 @@ export const CollectiveActionsCells = ({
     : offer.isShowcase &&
       [
         CollectiveOfferDisplayedStatus.ARCHIVED,
-        CollectiveOfferDisplayedStatus.PENDING,
+        // CollectiveOfferDisplayedStatus.PENDING,
       ].includes(offer.displayedStatus)
 
   const canEditOffer = areCollectiveNewStatusesEnabled

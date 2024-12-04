@@ -1,0 +1,5 @@
+@use "styles/mixins/fonts-design-system.scss" as fonts-design-system;
+
+.pdf-input-label {
+  @include fonts-design-system.button;
+}

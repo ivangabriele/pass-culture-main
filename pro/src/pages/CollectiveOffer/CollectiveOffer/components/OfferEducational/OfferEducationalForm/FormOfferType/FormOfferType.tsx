@@ -17,6 +17,8 @@ import {
   DURATION_LABEL,
   TITLE_LABEL,
 } from '../../constants/labels'
+import { FormPdfUploader } from '../FormPdfUploader/FormPdfUploader'
+
 
 export interface FormTypeProps {
   domainsOptions: SelectOption[]
@@ -122,6 +124,9 @@ export const FormOfferType = ({
             description="Détaillez ici votre projet et son interêt pédagogique."
             disabled={disableForm}
           />
+        </FormLayout.Row>
+        <FormLayout.Row mdSpaceAfter>
+          <FormPdfUploader />
         </FormLayout.Row>
         <FormLayout.Row>
           <TextInput
