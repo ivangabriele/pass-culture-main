@@ -108,6 +108,12 @@ jobs:
           token: ${{ steps.secrets.outputs.API_TOKEN_GITHUB }}
           path: ./pass-culture-deployment
 
+      - name: "Authentification to Google"
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: ${{ secrets.GCP_EHP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_EHP_SERVICE_ACCOUNT }}
+
       # Commit and push app_version to matching pcapi environment helm value file.
       - name: "Update image.tag in pass-culture-deployment repository"
         run: |
@@ -119,12 +125,6 @@ jobs:
           git diff-index --quiet HEAD || git commit -m "[${{ inputs.environment }}] Update pcapi image.tag (${{ inputs.app_version }}) (Github Actions Job : ${{ github.run_number }})"
           git pull -r
           git push origin master
-
-      - name: "Authentification to Google"
-        uses: 'google-github-actions/auth@v2'
-        with:
-          workload_identity_provider: ${{ secrets.GCP_EHP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_EHP_SERVICE_ACCOUNT }}
 
       # Executes helmfile templating and push results to render-manifests repository
       - name: "Generate and push rendered manifests"
