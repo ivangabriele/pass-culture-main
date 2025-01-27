@@ -238,10 +238,11 @@ class OfferStatusTest:
 
         assert expired_offer.status == offer_mixin.OfferStatus.EXPIRED
 
-    def test_expression_expired(self):
+    def test_expression_expired(self, db_session):
         expired_stock = factories.StockFactory(bookingLimitDatetime=datetime.datetime.utcnow())
         expired_offer = expired_stock.offer
         approved_offer = factories.OfferFactory()
+        db_session.commit()
 
         assert models.Offer.query.filter(models.Offer.status == offer_mixin.OfferStatus.EXPIRED.name).all() == [
             expired_offer
@@ -774,8 +775,7 @@ class OfferIsSearchableTest:
             .all()
         )
         assert len(results) == 2
-        assert results[0].id == offer_1.id
-        assert results[1].id == offer_3.id
+        assert {offer_1.id, offer_3.id} == {e.id for e in results}
 
     def test_offer_is_bookable(self):
         offer_1 = factories.OfferFactory(isActive=True)

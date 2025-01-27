@@ -12,6 +12,7 @@ from pcapi.core import search
 from pcapi.core.categories.subcategories_v2 import EacFormat
 from pcapi.core.educational import factories as educational_factories
 from pcapi.core.educational import models as educational_models
+from pcapi.core.educational.enum import OfferAddressType
 from pcapi.core.finance import factories as finance_factories
 from pcapi.core.finance import models as finance_models
 from pcapi.core.geography import factories as geography_factories
@@ -28,7 +29,7 @@ from .create_collective_api_provider import create_collective_api_provider
 
 
 class OfferVenue(typing.TypedDict):
-    addressType: educational_models.OfferAddressType
+    addressType: OfferAddressType
     venueId: int | None
     otherAddress: str
 
@@ -52,7 +53,7 @@ def get_location_options(venue: offerers_models.Venue) -> list[LocationOption]:
         {
             "name": "La culture chez l'acteur",
             "offerVenue": {
-                "addressType": educational_models.OfferAddressType.OFFERER_VENUE,
+                "addressType": OfferAddressType.OFFERER_VENUE,
                 "venueId": venue.id,
                 "otherAddress": "",
             },
@@ -61,7 +62,7 @@ def get_location_options(venue: offerers_models.Venue) -> list[LocationOption]:
         {
             "name": "La culture dans l'école",
             "offerVenue": {
-                "addressType": educational_models.OfferAddressType.SCHOOL,
+                "addressType": OfferAddressType.SCHOOL,
                 "venueId": None,
                 "otherAddress": "",
             },
@@ -71,7 +72,7 @@ def get_location_options(venue: offerers_models.Venue) -> list[LocationOption]:
         {
             "name": "La culture dans un lieu précis (avec edition manuelle)",
             "offerVenue": {
-                "addressType": educational_models.OfferAddressType.OTHER,
+                "addressType": OfferAddressType.OTHER,
                 "venueId": None,
                 "otherAddress": "35 Bd de Sébastopol, 75001 Paris",
             },
@@ -81,7 +82,7 @@ def get_location_options(venue: offerers_models.Venue) -> list[LocationOption]:
         {
             "name": "La culture dans un lieu précis",
             "offerVenue": {
-                "addressType": educational_models.OfferAddressType.OTHER,
+                "addressType": OfferAddressType.OTHER,
                 "venueId": None,
                 "otherAddress": "35 Bd de Sébastopol, 75001 Paris",
             },
@@ -90,7 +91,7 @@ def get_location_options(venue: offerers_models.Venue) -> list[LocationOption]:
         {
             "name": "La culture dans un lieu flou",
             "offerVenue": {
-                "addressType": educational_models.OfferAddressType.OTHER,
+                "addressType": OfferAddressType.OTHER,
                 "venueId": None,
                 "otherAddress": "A coté de la mairie",
             },
@@ -101,7 +102,7 @@ def get_location_options(venue: offerers_models.Venue) -> list[LocationOption]:
         {
             "name": "La culture chez un autre addresse de l'acteur culturel",
             "offerVenue": {
-                "addressType": educational_models.OfferAddressType.OFFERER_VENUE,
+                "addressType": OfferAddressType.OFFERER_VENUE,
                 "venueId": other_venue.id,
                 "otherAddress": "",
             },
@@ -110,7 +111,7 @@ def get_location_options(venue: offerers_models.Venue) -> list[LocationOption]:
         {
             "name": "La culture chez l'acteur qui n'existe pas",
             "offerVenue": {
-                "addressType": educational_models.OfferAddressType.OFFERER_VENUE,
+                "addressType": OfferAddressType.OFFERER_VENUE,
                 "venueId": 424242,
                 "otherAddress": "",
             },

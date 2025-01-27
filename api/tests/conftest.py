@@ -7,8 +7,8 @@ import os
 from pathlib import Path
 from pprint import pprint
 import sys
-import time
 from threading import get_ident as _get_ident
+import time
 import typing
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -776,6 +776,14 @@ def _transaction(request, _db):
     @sa.event.listens_for(session, "persistent_to_detached")
     @sa.event.listens_for(session, "deleted_to_detached")
     def rehydrate_object(session, obj):
+        # pytest-flask-sqlalchemy, for unknown reasons,
+        # listen for deleted instance and then try to re-add
+        # them to the session. Which, of course, breaks
+        # a lot of tests.
+        # If an object is delete and detach from the session
+        # do nothing
+        if obj not in session:
+            return
         session.add(obj)
 
     @request.addfinalizer

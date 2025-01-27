@@ -940,9 +940,11 @@ class DeleteStockTest:
         )
         booking1 = bookings_factories.BookingFactory(stock=stock)
         booking2 = bookings_factories.CancelledBookingFactory(stock=stock)
+        booking2_id = booking2.id
         booking3 = bookings_factories.UsedBookingFactory(stock=stock)
         event4 = finance_factories.UsedBookingFinanceEventFactory(booking__stock=stock)
         booking4 = event4.booking
+        booking4_id = booking4.id
         finance_factories.PricingFactory(
             event=event4,
             booking=booking4,
@@ -959,13 +961,13 @@ class DeleteStockTest:
         booking1 = bookings_models.Booking.query.get(booking1.id)
         assert booking1.status == bookings_models.BookingStatus.CANCELLED
         assert booking1.cancellationReason == bookings_models.BookingCancellationReasons.OFFERER
-        booking2 = bookings_models.Booking.query.get(booking2.id)
+        booking2 = bookings_models.Booking.query.get(booking2_id)
         assert booking2.status == bookings_models.BookingStatus.CANCELLED  # unchanged
         assert booking2.cancellationReason == bookings_models.BookingCancellationReasons.BENEFICIARY
         booking3 = bookings_models.Booking.query.get(booking3.id)
         assert booking3.status == bookings_models.BookingStatus.CANCELLED  # cancel used booking for event offer
         assert booking3.cancellationReason == bookings_models.BookingCancellationReasons.OFFERER
-        booking4 = bookings_models.Booking.query.get(booking4.id)
+        booking4 = bookings_models.Booking.query.get(booking4_id)
         assert booking4.status == bookings_models.BookingStatus.USED  # unchanged
         assert booking4.cancellationDate is None
         assert booking4.pricings[0].status == finance_models.PricingStatus.PROCESSED  # unchanged
@@ -1001,9 +1003,11 @@ class DeleteStockTest:
         )
         booking1 = bookings_factories.BookingFactory(stock=stock)
         booking2 = bookings_factories.CancelledBookingFactory(stock=stock)
+        booking2_id = booking2.id
         booking3 = bookings_factories.UsedBookingFactory(stock=stock)
         event4 = finance_factories.UsedBookingFinanceEventFactory(booking__stock=stock)
         booking4 = event4.booking
+        booking4_id = booking4.id
         finance_factories.PricingFactory(
             event=event4,
             booking=booking4,
@@ -1020,13 +1024,13 @@ class DeleteStockTest:
         booking1 = bookings_models.Booking.query.get(booking1.id)
         assert booking1.status == bookings_models.BookingStatus.CANCELLED
         assert booking1.cancellationReason == bookings_models.BookingCancellationReasons.OFFERER
-        booking2 = bookings_models.Booking.query.get(booking2.id)
+        booking2 = bookings_models.Booking.query.get(booking2_id)
         assert booking2.status == bookings_models.BookingStatus.CANCELLED  # unchanged
         assert booking2.cancellationReason == bookings_models.BookingCancellationReasons.BENEFICIARY
         booking3 = bookings_models.Booking.query.get(booking3.id)
         assert booking3.status == bookings_models.BookingStatus.CANCELLED  # cancel used booking for event offer
         assert booking3.cancellationReason == bookings_models.BookingCancellationReasons.OFFERER
-        booking4 = bookings_models.Booking.query.get(booking4.id)
+        booking4 = bookings_models.Booking.query.get(booking4_id)
         assert booking4.status == bookings_models.BookingStatus.USED  # unchanged
         assert booking4.cancellationDate is None
         assert booking4.pricings[0].status == finance_models.PricingStatus.PROCESSED  # unchanged
@@ -1360,7 +1364,7 @@ class CreateOfferTest:
 
         assert offer.offererAddressId == None
 
-    def test_create_offer_from_scratch(self):
+    def test_create_offer_from_scratch_with_oa(self):
         venue = offerers_factories.VenueFactory()
         offerer_address = offerers_factories.OffererAddressFactory(offerer=venue.managingOfferer)
 
@@ -3002,7 +3006,9 @@ class ResolveOfferValidationRuleTest:
         assert status == models.OfferValidationStatus.PENDING
         assert db_session.query(models.ValidationRuleOfferLink).count() == 0
 
-    def test_offer_validation_when_offerer_on_manual_review_with_rules(self, offer_matching_one_validation_rule, db_session):
+    def test_offer_validation_when_offerer_on_manual_review_with_rules(
+        self, offer_matching_one_validation_rule, db_session
+    ):
         offerers_factories.ManualReviewOffererConfidenceRuleFactory(
             offerer=offer_matching_one_validation_rule.venue.managingOfferer
         )

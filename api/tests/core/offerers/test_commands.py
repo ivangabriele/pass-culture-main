@@ -40,14 +40,14 @@ class CheckClosedOfferersTest:
         return_value=["222222226", "333333334", "444444442", "666666664"],
     )
     @patch("pcapi.connectors.entreprise.sirene.get_siren")
-    def test_check_closed_offerers(self, mock_get_siren, mock_get_siren_closed_at_date, app):
+    def test_check_closed_offerers(self, mock_get_siren, mock_get_siren_closed_at_date, run_command):
         offerers_factories.OffererFactory(siren="111111118")
         offerers_factories.OffererFactory(siren="222222226")
         offerers_factories.OffererFactory(siren="333333334", isActive=False)
         offerers_factories.RejectedOffererFactory(siren="555555556")
         offerers_factories.NotValidatedOffererFactory(siren="666666664")
 
-        run_command(app, "check_closed_offerers")
+        run_command("check_closed_offerers")
 
         mock_get_siren_closed_at_date.assert_called_once_with(datetime.date.today() - datetime.timedelta(days=2))
 
@@ -62,8 +62,8 @@ class CheckClosedOfferersTest:
         return_value=["222222226", "333333334"],
     )
     @patch("pcapi.connectors.entreprise.sirene.get_siren")
-    def test_no_known_siren(self, mock_get_siren, mock_get_siren_closed_at_date, app):
-        run_command(app, "check_closed_offerers")
+    def test_no_known_siren(self, mock_get_siren, mock_get_siren_closed_at_date, run_command):
+        run_command("check_closed_offerers")
         mock_get_siren_closed_at_date.assert_called_once_with(datetime.date.today() - datetime.timedelta(days=2))
         mock_get_siren.assert_not_called()
 
