@@ -735,7 +735,7 @@ class Venue(PcObject, Base, Model, HasThumbMixin, AccessibilityMixin):
     def has_headline_offer(self) -> bool:
         return any(headline_offer.isActive for headline_offer in self.headlineOffers)
 
-    _hasPartnerPage: sa_orm.Mapped["bool|None"] = sa_orm.query_expression()
+    _has_partner_page: sa_orm.Mapped["bool|None"] = sa_orm.query_expression()
 
     @hybrid_property
     def has_partner_page(self) -> bool:
@@ -756,7 +756,7 @@ class Venue(PcObject, Base, Model, HasThumbMixin, AccessibilityMixin):
         ).scalar()
 
     @has_partner_page.expression  # type: ignore[no-redef]
-    def has_partner_page(cls):
+    def has_partner_page(cls):  # pylint: disable=no-self-argument
         from pcapi.core.offers.models import Offer
 
         return (

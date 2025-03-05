@@ -610,7 +610,12 @@ def get_offerer_and_extradata(offerer_id: int) -> models.Offerer | None:
             has_partner_page.label("hasPartnerPage"),
         )
         .filter(models.Offerer.id == offerer_id)
-        .options(sqla_orm.load_only(models.Offerer.id, models.Offerer.name), with_expression)
+        .options(
+            sqla_orm.load_only(models.Offerer.id, models.Offerer.name),
+            sqla_orm.selectinload(models.Offerer.managedVenues).with_expression(
+                models.Venue._has_partner_page, models.Venue.has_partner_page
+            ),
+        )
         .one_or_none()
     )
 

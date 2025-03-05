@@ -33,7 +33,7 @@ class GetOffererVenueResponseModelGetterDict(GetterDict):
                 for collective_ds_application in self._obj.collectiveDmsApplications
             ]
         if key == "hasPartnerPage":
-            return self._obj.has_partner_page
+            return self._obj._has_partner_page
         return super().get(key, default)
 
 
