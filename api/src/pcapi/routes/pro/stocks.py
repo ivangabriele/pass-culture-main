@@ -13,9 +13,7 @@ from pcapi.core.offers import exceptions as offers_exceptions
 import pcapi.core.offers.api as offers_api
 import pcapi.core.offers.models as offers_models
 import pcapi.core.offers.validation as offers_validation
-from pcapi.models.api_errors import ApiErrors
-from pcapi.models.api_errors import ForbiddenError
-from pcapi.models.api_errors import ResourceGoneError
+from pcapi.models import api_errors
 from pcapi.repository import transaction
 from pcapi.routes.apis import private_api
 from pcapi.routes.serialization import stock_serialize
@@ -83,10 +81,7 @@ def upsert_stocks(body: stock_serialize.StocksUpsertBodyModel) -> stock_serializ
     try:
         offerer = offerers_repository.get_by_offer_id(body.offer_id)
     except offerers_exceptions.CannotFindOffererForOfferId:
-        raise ApiErrors(
-            {"offerer": ["Aucune structure trouvée à partir de cette offre"]},
-            status_code=404,
-        )
+        raise api_errors.ResourceNotFoundError({"offerer": ["Aucune structure trouvée à partir de cette offre"]})
     check_user_has_access_to_offerer(current_user, offerer.id)
 
     offer = (
@@ -123,9 +118,8 @@ def upsert_stocks(body: stock_serialize.StocksUpsertBodyModel) -> stock_serializ
                 existing_stocks = _get_existing_stocks_by_id(body.offer_id, stocks_to_edit)
                 for stock_to_edit in stocks_to_edit:
                     if stock_to_edit.id not in existing_stocks:
-                        raise ApiErrors(
+                        raise api_errors.ApiErrors(
                             {"stock_id": ["Le stock avec l'id %s n'existe pas" % stock_to_edit.id]},
-                            status_code=400,
                         )
 
                     offers_validation.check_stock_has_price_or_price_category(offer, stock_to_edit, price_categories)
@@ -166,23 +160,22 @@ def upsert_stocks(body: stock_serialize.StocksUpsertBodyModel) -> stock_serializ
                 upserted_stocks.append(created_stock)
 
     except offers_exceptions.BookingLimitDatetimeTooLate:
-        raise ApiErrors(
+        raise api_errors.ApiErrors(
             {"stocks": ["La date limite de réservation ne peut être postérieure à la date de début de l'évènement"]},
-            status_code=400,
         )
     except offers_exceptions.OfferEditionBaseException as error:
-        raise ApiErrors(error.errors, status_code=400)
+        raise api_errors.ApiErrors(error.errors)
 
     try:
         offers_api.handle_stocks_edition(edited_stocks_with_update_info)
     except booking_exceptions.BookingIsAlreadyCancelled:
-        raise ResourceGoneError({"booking": ["Cette réservation a été annulée"]})
+        raise api_errors.ResourceGoneError({"booking": ["Cette réservation a été annulée"]})
     except booking_exceptions.BookingIsAlreadyRefunded:
-        raise ResourceGoneError({"payment": ["Le remboursement est en cours de traitement"]})
+        raise api_errors.ResourceGoneError({"payment": ["Le remboursement est en cours de traitement"]})
     except booking_exceptions.BookingHasActivationCode:
-        raise ForbiddenError({"booking": ["Cette réservation ne peut pas être marquée comme inutilisée"]})
+        raise api_errors.ForbiddenError({"booking": ["Cette réservation ne peut pas être marquée comme inutilisée"]})
     except booking_exceptions.BookingIsNotUsed:
-        raise ResourceGoneError({"booking": ["Cette contremarque n'a pas encore été validée"]})
+        raise api_errors.ResourceGoneError({"booking": ["Cette contremarque n'a pas encore été validée"]})
 
     return stock_serialize.StocksResponseModel(stocks_count=len(upserted_stocks))
 
@@ -205,5 +198,5 @@ def delete_stock(stock_id: int) -> stock_serialize.StockIdResponseModel:
     try:
         offers_api.delete_stock(stock, current_user.real_user.id, current_user.is_impersonated)
     except offers_exceptions.OfferEditionBaseException as error:
-        raise ApiErrors(error.errors, status_code=400)
+        raise api_errors.ApiErrors(error.errors)
     return stock_serialize.StockIdResponseModel.from_orm(stock)
