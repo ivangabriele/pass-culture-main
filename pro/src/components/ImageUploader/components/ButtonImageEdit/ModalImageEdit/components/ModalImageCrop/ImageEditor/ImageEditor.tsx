@@ -25,12 +25,7 @@ function map(
 }
 
 export interface ImageEditorConfig {
-  canvasHeight: number
-  canvasWidth: number
-  cropBorderColor: string
-  cropBorderHeight: number
-  cropBorderWidth: number
-  maxScale: number
+  cropAreaAspect: number
 }
 
 interface ImageEditorProps extends ImageEditorConfig {

@@ -1,29 +1,34 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import { useRef, useState } from 'react'
 import AvatarEditor, { CroppedRect, Position } from 'react-avatar-editor'
+import Cropper from 'react-easy-crop'
 
 import { useAnalytics } from 'app/App/analytics/firebase'
 import { Events } from 'commons/core/FirebaseEvents/constants'
 import { useGetImageBitmap } from 'commons/hooks/useGetBitmap'
 import { useNotification } from 'commons/hooks/useNotification'
-import {
-  ImageEditor,
-  ImageEditorConfig,
-} from 'components/ImageUploader/components/ButtonImageEdit/ModalImageEdit/components/ModalImageCrop/ImageEditor/ImageEditor'
+import homeShell from 'components/ImageUploader/assets/offer-home-shell.png'
+import offerShell from 'components/ImageUploader/assets/offer-shell.png'
+import { ImageEditorConfig } from 'components/ImageUploader/components/ButtonImageEdit/ModalImageEdit/components/ModalImageCrop/ImageEditor/ImageEditor'
 import { coordonateToPosition } from 'components/ImageUploader/components/ButtonImageEdit/ModalImageEdit/components/ModalImageCrop/ImageEditor/utils'
 import { modeValidationConstraints } from 'components/ImageUploader/components/ButtonImageEdit/ModalImageEdit/components/ModalImageUploadBrowser/ImageUploadBrowserForm/constants'
 import { AppPreviewOffer } from 'components/ImageUploader/components/ImagePreview/components/AppPreviewOffer/AppPreviewOffer'
+import { ImagePreview } from 'components/ImageUploader/components/ImagePreview/ImagePreview'
+import { ImagePreviewsWrapper } from 'components/ImageUploader/components/ImagePreview/ImagePreviewsWrapper'
 import { UploaderModeEnum } from 'components/ImageUploader/types'
 import fullDownloadIcon from 'icons/full-download.svg'
 import fullTrashIcon from 'icons/full-trash.svg'
 import { Button } from 'ui-kit/Button/Button'
 import { ButtonVariant } from 'ui-kit/Button/types'
 import { DialogBuilder } from 'ui-kit/DialogBuilder/DialogBuilder'
+import { Slider } from 'ui-kit/form/Slider/Slider'
 import { TextInput } from 'ui-kit/formV2/TextInput/TextInput'
 
 import { getCropMaxDimension } from '../../utils/getCropMaxDimension'
 
+import homeStyle from './HomeScreenPreview.module.scss'
 import style from './ModalImageCrop.module.scss'
+import offerStyle from './OfferScreenPreview.module.scss'
 
 export type ModalImageCropProps = {
   image: File
@@ -43,6 +48,8 @@ export type ModalImageCropProps = {
   imageUrl?: string
 }
 
+const CROP_AREA_ASPECT = 3 / 2
+
 export const ModalImageCrop = ({
   image,
   initialCredit,
@@ -57,10 +64,16 @@ export const ModalImageCrop = ({
 }: ModalImageCropProps): JSX.Element => {
   const { logEvent } = useAnalytics()
   const { width, height } = useGetImageBitmap(image)
-  const editorRef = useRef<AvatarEditor>(null)
+  const editorRef = useRef(null)
   const notification = useNotification()
   const [credit, setCredit] = useState(initialCredit || '')
-  const [dataUrl, setDataUrl] = useState<string>(imageUrl || '')
+  const [dataUrl, setDataUrl] = useState<string>(
+    URL.createObjectURL(image) || ''
+  )
+  const [crop, setCrop] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [croppedArea, setCroppedArea] = useState(null)
+  const [initialCroppedArea, setInitialCroppedArea] = useState(undefined)
 
   const minWidth = modeValidationConstraints[mode].minWidth
 
@@ -85,28 +98,13 @@ export const ModalImageCrop = ({
 
   const imageEditorConfig: ImageEditorConfig = {
     [UploaderModeEnum.OFFER]: {
-      canvasHeight,
-      canvasWidth: (canvasHeight * 2) / 3,
-      cropBorderColor: '#FFF',
-      cropBorderHeight: 50,
-      cropBorderWidth: 105,
-      maxScale,
+      cropAreaAspect: 2 / 3,
     },
     [UploaderModeEnum.OFFER_COLLECTIVE]: {
-      canvasHeight,
-      canvasWidth: (canvasHeight * 2) / 3,
-      cropBorderColor: '#FFF',
-      cropBorderHeight: 50,
-      cropBorderWidth: 105,
-      maxScale,
+      cropAreaAspect: 2 / 3,
     },
     [UploaderModeEnum.VENUE]: {
-      canvasHeight,
-      canvasWidth: (canvasHeight * 3) / 2,
-      cropBorderColor: '#FFF',
-      cropBorderHeight: 40,
-      cropBorderWidth: 100,
-      maxScale,
+      cropAreaAspect: 3 / 2,
     },
   }[mode]
 
@@ -124,7 +122,7 @@ export const ModalImageCrop = ({
     })
 
     try {
-      if (editorRef.current) {
+      if (editorRef) {
         const canvas = editorRef.current.getImage()
         setDataUrl(canvas.toDataURL())
 
@@ -150,8 +148,8 @@ export const ModalImageCrop = ({
     return handleImageChange(onEditedImageSave)
   }
 
-  const handleChangeDone = () => {
-    return handleImageChange()
+  const onCropComplete = (croppedArea, croppedAreaPixels) => {
+    console.log(croppedArea, croppedAreaPixels)
   }
 
   return (
@@ -171,13 +169,27 @@ export const ModalImageCrop = ({
 
         <div className={style['modal-image-crop-wrapper']}>
           <div className={style['modal-image-crop-editor']}>
-            <ImageEditor
-              {...imageEditorConfig}
-              image={image}
-              initialPosition={initialPosition}
-              ref={editorRef}
-              initialScale={initialScale}
-              onChangeDone={handleChangeDone}
+            <div className={style['cropper']}>
+              <Cropper
+                image={dataUrl}
+                aspect={imageEditorConfig.cropAreaAspect}
+                crop={crop}
+                zoom={zoom}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropAreaChange={setCroppedArea}
+                onCropComplete={onCropComplete}
+                ref={editorRef}
+              />
+            </div>
+            <Slider
+              name="scale"
+              step={0.01}
+              max={maxScale > 1 ? maxScale.toFixed(2) : 1}
+              min={1}
+              displayMinMaxValues={false}
+              value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
             />
             <div className={style['modal-image-crop-actions']}>
               <Button
@@ -199,7 +211,9 @@ export const ModalImageCrop = ({
               </Dialog.Close>
             </div>
           </div>
-          <AppPreview imageUrl={dataUrl} />
+          {croppedArea && (
+            <Output croppedArea={croppedArea} zoom={zoom} imageUrl={dataUrl} />
+          )}
         </div>
 
         <TextInput
@@ -231,5 +245,84 @@ export const ModalImageCrop = ({
         </div>
       </DialogBuilder.Footer>
     </form>
+  )
+}
+
+// Define the type for the cropped area
+export type CroppedArea = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+// Define the type for the props of Output component
+export type OutputProps = {
+  croppedArea: CroppedArea
+  imageUrl: string
+  zoom: number // Add zoom prop here
+}
+
+export const Output = ({ croppedArea, zoom, imageUrl }: OutputProps) => {
+  const clipLeft = `${croppedArea.x}%`
+  const clipTop = `${croppedArea.y}%`
+  const clipRight = `${100 - (croppedArea.x + croppedArea.width)}%`
+  const clipBottom = `${100 - (croppedArea.y + croppedArea.height)}%`
+
+  const imageStyle = {
+    objectFit: 'cover',
+    width: '100%', // Keep the width of the image filling the container
+    height: '100%', // Keep the height of the image filling the container
+    clipPath: `inset(${clipTop} ${clipRight} ${clipBottom} ${clipLeft})`,
+    transition: 'clip-path 0.3s ease-in-out',
+    transform: `scale(${zoom})`, // Apply zoom transformation to the image
+    transformOrigin: 'top left', // Anchor the zoom to the top-left corner
+    objectPosition: `top left`, // Keep the image aligned to the top-left corner
+  }
+
+  return (
+    <ImagePreviewsWrapper>
+      <ImagePreview title="Page d’accueil">
+        <img
+          alt=""
+          className={homeStyle['image-preview-shell']}
+          src={homeShell}
+          role="presentation"
+        />
+        <div style={{ width: '36px', height: '54px' }}>
+          <img
+            data-testid="app-preview-offer-img-home"
+            alt=""
+            width={'70px'}
+            className={homeStyle['image-preview-home-preview']}
+            src={imageUrl}
+            role="presentation"
+            style={imageStyle}
+          />
+        </div>
+      </ImagePreview>
+      <ImagePreview title="Détails de l’offre">
+        <img
+          alt=""
+          className={offerStyle['image-preview-blur-offer-preview']}
+          src={imageUrl}
+          role="presentation"
+        />
+        <img
+          alt=""
+          className={offerStyle['image-preview-shell']}
+          src={offerShell}
+          role="presentation"
+        />
+        <img
+          data-testid="app-preview-offer-img"
+          alt=""
+          className={offerStyle['image-preview-offer-preview']}
+          src={imageUrl}
+          role="presentation"
+          style={imageStyle}
+        />
+      </ImagePreview>
+    </ImagePreviewsWrapper>
   )
 }
