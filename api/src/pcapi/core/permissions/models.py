@@ -59,6 +59,7 @@ class Permissions(enum.Enum):
     READ_BOOKINGS = "visualiser les réservations"
 
     READ_OFFERS = "visualiser les offres"
+    READ_PRODUCTS = "visualiser les produits"
     MANAGE_OFFERS = "gérer les offres"
     MULTIPLE_OFFERS_ACTIONS = "opérations sur plusieurs offres"
 
