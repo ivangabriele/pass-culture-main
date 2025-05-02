@@ -561,12 +561,8 @@ def format_product_cgu_compatibility_status(
 ) -> str:
     prefix = "\u2022\u00a0"  # bullet(•) + no-break space
     match cgu_compatibility:
-        # a revoir
         case offers_models.GcuCompatibilityType.COMPATIBLE:
-            text = f"{prefix}Compatible" if with_badge else f"Compatible"
-            if provider_name:
-                text += f" ({provider_name.capitalize()})"
-            return format_badge(text, "success") if with_badge else text
+            return format_badge(f"{prefix}Compatible", "success") if with_badge else "Compatible"
         case offers_models.GcuCompatibilityType.FRAUD_INCOMPATIBLE:
             return (
                 format_badge(f"{prefix}Incompatible (Fraude & Conformité)", "danger")
@@ -574,7 +570,9 @@ def format_product_cgu_compatibility_status(
                 else "Incompatible (Fraude & Conformité)"
             )
         case offers_models.GcuCompatibilityType.PROVIDER_INCOMPATIBLE:
-            return format_badge(f"{prefix}Incompatible", "danger") if with_badge else "Incompatible (Provider)"
+            return (
+                format_badge(f"{prefix}Incompatible (Provider)", "danger") if with_badge else "Incompatible (Provider)"
+            )
         case _:
             return cgu_compatibility.value
 

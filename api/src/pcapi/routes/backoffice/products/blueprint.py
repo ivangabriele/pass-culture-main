@@ -1,7 +1,10 @@
 import dataclasses
 import enum
 
-from flask import render_template, url_for, flash, request
+from flask import flash
+from flask import render_template
+from flask import request
+from flask import url_for
 from flask_login import current_user
 from markupsafe import Markup
 from werkzeug.exceptions import NotFound
@@ -14,8 +17,10 @@ from pcapi.models import db
 from pcapi.models.offer_mixin import OfferValidationStatus
 from pcapi.repository.session_management import mark_transaction_as_invalid
 from pcapi.routes.backoffice import utils
-from pcapi.routes.backoffice.forms import empty as empty_forms
 from pcapi.utils import requests
+
+from . import forms
+
 
 list_products_blueprint = utils.child_backoffice_blueprint(
     "product",
@@ -238,3 +243,36 @@ def blacklist_product(product_id: int) -> utils.BackofficeResponse:
     # flash("Le produit a été blacklisté", "success")
     # return redirect(request.referrer, 303)
     # # return redirect(request.referrer or url_for("backoffice_web.product.list_offers"), 303)
+
+
+# @list_products_blueprint.route("/<int:product_id>/batch-link-offer-to-product-form", methods=["GET", "POST"])
+@list_products_blueprint.route("/<int:product_id>/link_offers/confirm", methods=["GET", "POST"])
+@utils.permission_required(perm_models.Permissions.PRO_FRAUD_ACTIONS)
+def confirm_link_offers_forms(product_id: int) -> utils.BackofficeResponse:
+    form = forms.BatchLinkOfferToProductForm()
+    if form.object_ids.data:
+        pass
+    print("OUI")
+    return render_template(
+        "components/turbo/modal_form.html",
+        form=form,
+        dst=url_for("backoffice_web.product.batch_link_offers_to_product", product_id=product_id),
+        div_id="batch-link-to-product-modal",
+        title=Markup("Voulez-vous associé ces {number_of_offers} offre au produit ?").format(
+            number_of_offers=len(form.object_ids_list)
+        ),
+        button_text="Confirmer l'association",
+        information=Markup("Vous allez associer {number_of_offers} offre(s). Voulez vous continuer ?").format(
+            number_of_offers=len(form.object_ids_list),
+        ),
+    )
+
+
+@list_products_blueprint.route("/<int:product_id>/link_offers", methods=["POST"])
+@utils.permission_required(perm_models.Permissions.PRO_FRAUD_ACTIONS)
+def batch_link_offers_to_product(product_id) -> utils.BackofficeResponse:
+    form = forms.BatchLinkOfferToProductForm()
+    offers = db.session.query(offers_models.Offer).filter(offers_models.Offer.id.in_(form.object_ids_list)).all()
+    for offer in offers:
+        offer.productId = product_id
+    return redirect(request.referrer or url_for(".get_product_details", product_id=product_id), 303)

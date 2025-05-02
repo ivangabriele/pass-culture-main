@@ -53,7 +53,7 @@
 {% call content_navbar("product-details") %}
 {{ content_navbar_element('info', 'Détails') }}
 {{ content_navbar_element('offres', 'Offres') }}
-{{ content_navbar_element('offres non liées', 'Offres non lié') }}
+{{ content_navbar_element('offres non liées', 'Offres non liées') }}
 {% endcall %}
 {% endblock extra_title_bar %}
 
@@ -136,7 +136,13 @@
 {% endcall %}
 {# section info #}
 {% call nav_section("offres", "Offers") %}
-<table class="table table-borderless table-hover">
+
+<p class="lead num-results">
+{{ product.offers | length }}
+résultat{{ rows | length | pluralize }}
+</p>
+
+<table id="offers-table" class="table table-borderless table-hover">
     <thead class="table-light">
     <tr class="table-secondary fs-7">
         <th>ID</th>
@@ -146,22 +152,160 @@
     </tr>
     </thead>
     <tbody>
-    {% for offer in product.offers | sort(attribute="id", reverse=True) | sort(attribute="dateCreated", reverse=True) %}
-    <tr>
-        <td>{{ links.build_offer_details_link(offer) }}</td>
-        <td>{{ offer.name }}</td>
-        <td>{{ offer.status | format_offer_status }}</td>
-        <td>{{ offer.dateCreated | format_date_time }}</td>
-    </tr>
-    {% endfor %}
+    <!--    {% for offer in product.offers | sort(attribute="id", reverse=True) | sort(attribute="dateCreated", reverse=True) %}-->
+    <!--    <tr>-->
+    <!--        <td>{{ links.build_offer_details_link(offer) }}</td>-->
+    <!--        <td>{{ offer.name }}</td>-->
+    <!--        <td>{{ offer.status | format_offer_status }}</td>-->
+    <!--        <td>{{ offer.dateCreated | format_date_time }}</td>-->
+    <!--    </tr>-->
+    <!--    {% endfor %}-->
     </tbody>
 </table>
+
+<div id="pagination" class="pagination">
+    <!-- Les boutons de pagination seront insérés ici par JavaScript -->
+</div>
+<style>
+    #pagination {
+margin-top: 20px;
+}
+
+#pagination a.page-link {
+margin: 0 3px;
+text-decoration: none;
+padding: 4px 8px;
+border: none;
+background: none;
+font-weight: normal;
+cursor: pointer;
+}
+
+#pagination a.page-link.active {
+font-weight: bold;
+color: black;
+text-decoration: underline;
+}
+
+#pagination button {
+margin-left: 10px;
+padding: 4px 10px;
+cursor: pointer;
+}
+</style>
+<script>
+    // Récupération des données des offres passées depuis le backend
+    const offers = {{ product.offers_dict | tojson }};
+
+    // Paramètres de pagination
+    const itemsPerPage = 20; // Nombre d'éléments par page
+    let currentPage = 1; // Page courante
+
+function displayPage(page) {
+    const totalPages = Math.ceil(offers.length / itemsPerPage);
+    if (page < 1 || page > totalPages) return;
+
+    currentPage = page;
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const offersToDisplay = offers.slice(startIndex, endIndex);
+
+    const tbody = document.querySelector('#offers-table tbody');
+    tbody.innerHTML = '';
+
+    offersToDisplay.forEach(offer => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${offer.id}</td>
+            <td>${offer.name}</td>
+            <td>${offer.status}</td>
+            <td>${offer.dateCreated}</td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    updatePagination();
+}
+
+function updatePagination() {
+    const totalPages = Math.ceil(offers.length / itemsPerPage);
+    const paginationDiv = document.getElementById('pagination');
+    paginationDiv.innerHTML = '';
+
+    const maxPagesToShow = 20;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = startPage + maxPagesToShow - 1;
+
+    if (endPage > totalPages) {
+        endPage = totalPages;
+        startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+
+    // Précédent
+    if (currentPage > 1) {
+        const prevBtn = document.createElement('a');
+        prevBtn.href = '#';
+        prevBtn.textContent = 'Précédent';
+        prevBtn.classList.add('pagination-text-link');
+        prevBtn.onclick = () => displayPage(currentPage - 1);
+        paginationDiv.appendChild(prevBtn);
+    }
+
+    // Pages numérotées
+    for (let i = startPage; i <= endPage; i++) {
+        const pageLink = document.createElement('a');
+        pageLink.href = '#';
+        pageLink.textContent = i;
+        pageLink.classList.add('page-link');
+        if (i === currentPage) {
+            pageLink.classList.add('active');
+        }
+        pageLink.addEventListener('click', e => {
+            e.preventDefault();
+            displayPage(i);
+        });
+        paginationDiv.appendChild(pageLink);
+    }
+
+    // Suivant
+    if (currentPage < totalPages) {
+        const nextBtn = document.createElement('a');
+        nextBtn.href = '#';
+        nextBtn.textContent = 'Suivant';
+        nextBtn.classList.add('pagination-text-link');
+        nextBtn.onclick = () => displayPage(currentPage + 1);
+        paginationDiv.appendChild(nextBtn);
+    }
+}
+// Initialiser l'affichage de la première page
+displayPage(1);
+
+</script>
 {% endcall %}
 
-{% call nav_section("offres non liées", "Offers non lié") %}
-<table class="table table-borderless table-hover">
+{% call nav_section("offres non liées", "Offres non liées") %}
+<div class="btn-group btn-group-sm"
+   data-toggle="pc-batch-confirm-btn-group"
+   data-toggle-id="table-link-offer-to-product-btn-group"
+   data-pc-table-multi-select-id="table-link-offer-to-product-validation"
+   data-input-ids-name="object_ids">
+    <button disabled
+        type="button"
+        class="btn btn-outline-primary"
+        data-use-confirmation-modal="true"
+        data-mode="fetch"
+        data-fetch-url="{{ url_for('backoffice_web.product.confirm_link_offers_forms', product_id=product.id) }}"
+        data-modal-selector="#batch-link-to-product-modal">Associer les offres au produit</button>
+</div>
+
+<table class="table table-borderless table-hover" data-table-multi-select-id="table-link-offer-to-product-validation">
     <thead class="table-light">
     <tr class="table-secondary fs-7">
+        <th scope="col">
+        <input type="checkbox"
+               class="form-check-input"
+               name="pc-table-multi-select-check-all" />
+        </th>
         <th>ID</th>
         <th>Nom</th>
         <th>Status</th>
@@ -169,8 +313,15 @@
     </tr>
     </thead>
     <tbody id="offres-non-liees">
-    {% for offer in offer_not_linked | sort(attribute="id", reverse=True) | sort(attribute="dateCreated", reverse=True) %}
+    {% for offer in offer_not_linked | sort(attribute="id", reverse=True) | sort(attribute="dateCreated", reverse=True)
+    %}
     <tr>
+        <td>
+          <input type="checkbox"
+                 class="form-check-input"
+                 name="pc-table-multi-select-check-{{ offer.id }}"
+                 data-id="{{ offer.id }}" />
+        </td>
         <td>{{ links.build_offer_details_link(offer) }}</td>
         <td>{{ offer.name }}</td>
         <td>{{ offer.status | format_offer_status }}</td>
@@ -179,33 +330,36 @@
     {% endfor %}
     </tbody>
 </table>
-    <!-- je sais pas ce que je fait du CSS -->
-    <style>
-        .pagination a {
-            padding: 5px 10px;
-            margin: 0 5px;
-            cursor: pointer;
-        }
-        .pagination .active {
-            font-weight: bold;
-        }
-    </style>
-    <div class="pagination">
-        <!-- Lien vers la page précédente -->
-        {% if page > 1 %}
-            <a href="{{ url_for('.get_product_details', product_id=product.id, page=page-1, per_page=per_page) }}#offres-non-liees">Précédent</a>
-        {% endif %}
+{{ build_lazy_modal(url_for("backoffice_web.product.confirm_link_offers_forms", product_id=product.id) , "batch-link-to-product-modal", "true") }}
 
-        <!-- Affichage des pages -->
-        {% for p in range(1, total_pages + 1) %}
-            <a href="{{ url_for('.get_product_details', product_id=product.id, page=p, per_page=per_page) }}#offres-non-liees" class="{% if p == page %}active{% endif %}">{{ p }}</a>
-        {% endfor %}
+<!-- je sais pas ce que je fait du CSS -->
+<style>
+    .pagination-non-linked-offers a {
+        padding: 5px 10px;
+        margin: 0 5px;
+        cursor: pointer;
+    }
+    .pagination-non-linked-offers .active {
+        font-weight: bold;
+    }
+</style>
+<div class="pagination-non-linked-offers">
+    <!-- Lien vers la page précédente -->
+    {% if page > 1 %}
+    <a href="{{ url_for('.get_product_details', product_id=product.id, page=page-1, per_page=per_page) }}#offres-non-liees">Précédent</a>
+    {% endif %}
 
-        <!-- Lien vers la page suivante -->
-        {% if page < total_pages %}
-            <a href="{{ url_for('.get_product_details', product_id=product.id, page=page+1, per_page=per_page) }}#offres-non-liees">Suivant</a>
-        {% endif %}
-    </div>
+    <!-- Affichage des pages -->
+    {% for p in range(1, total_pages + 1) %}
+    <a href="{{ url_for('.get_product_details', product_id=product.id, page=p, per_page=per_page) }}#offres-non-liees"
+       class="{% if p == page %}active{% endif %}">{{ p }}</a>
+    {% endfor %}
+
+    <!-- Lien vers la page suivante -->
+    {% if page < total_pages %}
+    <a href="{{ url_for('.get_product_details', product_id=product.id, page=page+1, per_page=per_page) }}#offres-non-liees">Suivant</a>
+    {% endif %}
+</div>
 {% endcall %}
 
 {% endcall %}
@@ -243,7 +397,7 @@
     {% endif %}
     <hr/>
     {% call description_detail_vertical("Nombre d'offres associées") %}
-        {{ offers_count }}
+    {{ offers_count }}
     {% endcall %}
     {% call description_detail_vertical("Approuvées actives") %}
     {{ approved_active_offers_count }}
