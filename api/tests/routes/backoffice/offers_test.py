@@ -3670,3 +3670,37 @@ class GetOfferDetailsTest(GetEndpointHelper):
 
         descriptions = html_parser.extract_descriptions(response.data)
         assert descriptions["Entité juridique"] == "Offerer Top Acteur"
+
+
+class GetProductDetailsTest(GetEndpointHelper):
+    endpoint = "backoffice_web.product.get_product_details"
+    endpoint_kwargs = {"product_id": 1}
+    needed_permission = perm_models.Permissions.READ_OFFERS
+
+    # session + user + offer with joined data
+    expected_num_queries = 3
+    expected_num_queries_with_ff = 4
+
+    def test_get_detail_product(self, authenticated_client):
+        product = offers_factories.ProductFactory(
+            description="Une offre pour tester",
+            ean="1234567891234",
+            extraData={"author": "Author", "editeur": "Editor", "gtl_id": "08010000"},
+        )
+
+        offer = offers_factories.OfferFactory(
+            product=product,
+            withdrawalDetails="Demander à la caisse",
+            bookingContact="contact@example.com",
+            bookingEmail="offre@example.com",
+            ean="1234567891234",
+        )
+        offers_factories.OfferComplianceFactory(
+            offer=offer,
+            compliance_score=55,
+            compliance_reasons=["stock_price", "offer_subcategory_id", "offer_description"],
+        )
+        url = url_for(self.endpoint, product_id=product.id, _external=True)
+        with assert_num_queries(self.expected_num_queries):
+            response = authenticated_client.get(url)
+            assert response.status_code == 200

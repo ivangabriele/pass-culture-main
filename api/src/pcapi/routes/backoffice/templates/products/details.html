@@ -16,18 +16,27 @@
   </div>
 {% endblock %}
 {% block action_buttons %}
-  {% if action.WHITELIST in allowed_actions.inline_actions %}
+  {% if action.SYNCHRO_TITELIVE in allowed_actions.inline_actions %}
     {{ action_bar_button("arrow-repeat", "Synchronisation Titelive", modal_id="#synchro-product-modal-" + product.id|string) }}
   {% endif %}
-  {% if action.BLACKLIST in allowed_actions.inline_actions %}
+  {% if action.WHITELIST in allowed_actions.inline_actions and product.gcuCompatibilityType.value != "COMPATIBLE" %}
+    {{ action_bar_button("check-circle", "Whitelist", modal_id="#whitelist-product-modal-" + product.id|string) }}
+  {% endif %}
+  {% if action.BLACKLIST in allowed_actions.inline_actions and product.gcuCompatibilityType.value == "COMPATIBLE" %}
     {{ action_bar_button("x-circle", "Blacklist", modal_id="#blacklist-product-modal-" + product.id|string) }}
   {% endif %}
   <!-- ADDITIONAL BUTTONS TO PUT IN DROPDOWN MENU -->
   {% if allowed_actions.additional_actions %}
     <ul class="dropdown-menu">
-      {% if action.WHITELIST in allowed_actions.additional_actions %}
+      {% if action.SYNCHRO_TITELIVE in allowed_actions.additional_actions %}
         <li>
           {{ action_bar_additional_button("arrow-repeat", "Synchronisation Titelive", modal_id="#synchro-product-modal-" +
+                    product.id|string) }}
+        </li>
+      {% endif %}
+      {% if action.WHITELIST in allowed_actions.additional_actions %}
+        <li>
+          {{ action_bar_additional_button("check-circle", "Whitelist", modal_id="#whitelist-product-modal-" +
                     product.id|string) }}
         </li>
       {% endif %}
@@ -59,12 +68,24 @@
     {% call nav_section("info", "Détails du produit") %}
       <div class="d-flex gap-1">
         <div class="flex-grow-1">
-          {% if product.ean %}
+          {% if product.ean or product.extraData.visa or product.extraData.allocineId %}
             <h5>Informations techniques</h5>
             {% if product.ean %}
               {% call description_detail_horizontal("EAN") %}
                 {{ product.ean }}
                 {{ clipboard.copy_to_clipboard(product.ean, "Copier") }}
+              {% endcall %}
+            {% endif %}
+            {% if product.extraData.visa %}
+              {% call description_detail_horizontal("Visa") %}
+                {{ product.extraData.visa }}
+                {{ clipboard.copy_to_clipboard(product.extraData.visa, "Copier") }}
+              {% endcall %}
+            {% endif %}
+            {% if product.extraData.allocineId %}
+              {% call description_detail_horizontal("Allocine ID") %}
+                {{ product.extraData.allocineId }}
+                {{ clipboard.copy_to_clipboard(product.extraData.allocineId, "Copier") }}
               {% endcall %}
             {% endif %}
           {% endif %}
@@ -133,7 +154,7 @@
     {% call nav_section("offres", "Offers") %}
       <p class="lead num-results">
         {{ product.offers | length }}
-        résultat{{ rows | length | pluralize }}
+        résultat{{ product.offers | length | pluralize }}
       </p>
       <table id="offers-table"
              class="table table-borderless table-hover">
@@ -141,25 +162,15 @@
           <tr class="table-secondary fs-7">
             <th>ID</th>
             <th>Nom</th>
+            <th>Partenaire culturel</th>
             <th>Status</th>
             <th>Date de création</th>
           </tr>
         </thead>
         <tbody>
-          <!--    {% for offer in product.offers | sort(attribute="id", reverse=True) | sort(attribute="dateCreated", reverse=True) %}-->
-          <!--    <tr>-->
-          <!--        <td>{{ links.build_offer_details_link(offer) }}</td>-->
-          <!--        <td>{{ offer.name }}</td>-->
-          <!--        <td>{{ offer.status | format_offer_status }}</td>-->
-          <!--        <td>{{ offer.dateCreated | format_date_time }}</td>-->
-          <!--    </tr>-->
-          <!--    {% endfor %}-->
         </tbody>
       </table>
-      <div id="pagination"
-           class="pagination">
-        <!-- Les boutons de pagination seront insérés ici par JavaScript -->
-      </div>
+      <div id="pagination" class="pagination"></div>
       <style>
         #pagination {
           margin-top: 20px;
@@ -188,16 +199,9 @@
         }
       </style>
       <script>
-        // Récupération des données des offres passées depuis le backend
-        const offers = {
-          {
-            product.offers_dict | tojson
-          }
-        };
-
-        // Paramètres de pagination
-        const itemsPerPage = 20; // Nombre d'éléments par page
-        let currentPage = 1; // Page courante
+        const offers = {{ product.offers_dict | tojson }};
+        const itemsPerPage = 20;
+        let currentPage = 1;
 
         function displayPage(page) {
           const totalPages = Math.ceil(offers.length / itemsPerPage);
@@ -214,8 +218,16 @@
           offersToDisplay.forEach(offer => {
             const row = document.createElement('tr');
             row.innerHTML = `
-            <td>${offer.id}</td>
+            <td><a href="/pro/offer/${offer.id}" class="link-primary">${offer.id}</a></td>
             <td>${offer.name}</td>
+            <td>
+              <a href="/pro/venue/${offer.venue_id}"
+              class="link-primary"
+              data-bs-toggle="tooltip"
+              data-bs-placement="top"
+              data-bs-title="Voir le partenaire culturel"
+              target="_top">${offer.venue_name}</a>
+            </td>
             <td>${offer.status}</td>
             <td>${offer.dateCreated}</td>
         `;
@@ -279,82 +291,84 @@
         displayPage(1);
       </script>
     {% endcall %}
-    {% call nav_section("offres non liées", "Offres non liées") %}
-      <div class="btn-group btn-group-sm"
-           data-toggle="pc-batch-confirm-btn-group"
-           data-toggle-id="table-link-offer-to-product-btn-group"
-           data-pc-table-multi-select-id="table-link-offer-to-product-validation"
-           data-input-ids-name="object_ids">
-        <button disabled
-                type="button"
-                class="btn btn-outline-primary"
-                data-use-confirmation-modal="true"
-                data-mode="fetch"
-                data-fetch-url="{{ url_for('backoffice_web.product.confirm_link_offers_forms', product_id=product.id) }}"
-                data-modal-selector="#batch-link-to-product-modal">Associer les offres au produit</button>
-      </div>
-      <table class="table table-borderless table-hover"
-             data-table-multi-select-id="table-link-offer-to-product-validation">
-        <thead class="table-light">
-          <tr class="table-secondary fs-7">
-            <th scope="col">
-              <input type="checkbox"
-                     class="form-check-input"
-                     name="pc-table-multi-select-check-all" />
-            </th>
-            <th>ID</th>
-            <th>Nom</th>
-            <th>Status</th>
-            <th>Date de création</th>
-          </tr>
-        </thead>
-        <tbody id="offres-non-liees">
-          {% for offer in offer_not_linked | sort(attribute="id", reverse=True) | sort(attribute="dateCreated", reverse=True)
-            %}
-            <tr>
-              <td>
+    {% if offer_not_linked %}
+      {% call nav_section("offres non liées", "Offres non liées") %}
+        <p class="lead num-results">
+          {{ total_offer_not_linked }}
+          résultat{{ offer_not_linked | length | pluralize }}
+        </p>
+ <div class="btn-group btn-group-sm"
+             data-toggle="pc-batch-confirm-btn-group"
+             data-toggle-id="table-link-offer-to-product-btn-group"
+             data-pc-table-multi-select-id="table-link-offer-to-product-validation"
+             data-input-ids-name="object_ids">
+          <button disabled
+                  type="button"
+                  class="btn btn-outline-primary"
+                  data-use-confirmation-modal="true"
+                  data-mode="fetch"
+                  data-fetch-url="{{ url_for('backoffice_web.product.confirm_link_offers_forms', product_id=product.id) }}"
+                  data-modal-selector="#batch-link-to-product-modal">Associer les offres au produit</button>
+        </div>
+        <table class="table table-borderless table-hover"
+               data-table-multi-select-id="table-link-offer-to-product-validation">
+          <thead class="table-light">
+            <tr class="table-secondary fs-7">
+              <th scope="col">
                 <input type="checkbox"
                        class="form-check-input"
-                       name="pc-table-multi-select-check-{{ offer.id }}"
-                       data-id="{{ offer.id }}" />
-              </td>
-              <td>{{ links.build_offer_details_link(offer) }}</td>
-              <td>{{ offer.name }}</td>
-              <td>{{ offer.status | format_offer_status }}</td>
-              <td>{{ offer.dateCreated | format_date_time }}</td>
+                       name="pc-table-multi-select-check-all" />
+              </th>
+              <th>ID</th>
+              <th>Nom</th>
+              <th>Status</th>
+              <th>Date de création</th>
             </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      {{ build_lazy_modal(url_for("backoffice_web.product.confirm_link_offers_forms", product_id=product.id) , "batch-link-to-product-modal", "true") }}
-      <!-- je sais pas ce que je fait du CSS -->
-      <style>
-        .pagination-non-linked-offers a {
-          padding: 5px 10px;
-          margin: 0 5px;
-          cursor: pointer;
-        }
+          </thead>
+          <tbody id="offres-non-liees">
+            {% for offer in offer_not_linked | sort(attribute="id", reverse=True) | sort(attribute="dateCreated", reverse=True)
+              %}
+              <tr>
+                <td>
+                  <input type="checkbox"
+                         class="form-check-input"
+                         name="pc-table-multi-select-check-{{ offer.id }}"
+                         data-id="{{ offer.id }}" />
+                </td>
+                <td>{{ links.build_offer_details_link(offer) }}</td>
+                <td>{{ offer.name }}</td>
+                <td>{{ offer.status | format_offer_status }}</td>
+                <td>{{ offer.dateCreated | format_date_time }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {{ build_lazy_modal(url_for("backoffice_web.product.confirm_link_offers_forms", product_id=product.id) , "batch-link-to-product-modal", "true") }}
+        <style>
+          .pagination-non-linked-offers a {
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+          }
 
-        .pagination-non-linked-offers .active {
-          font-weight: bold;
-        }
-      </style>
-      <div class="pagination-non-linked-offers">
-        <!-- Lien vers la page précédente -->
-        {% if page > 1 %}
-          <a href="{{ url_for('.get_product_details', product_id=product.id, page=page-1, per_page=per_page) }}#offres-non-liees">Précédent</a>
-        {% endif %}
-        <!-- Affichage des pages -->
-        {% for p in range(1, total_pages + 1) %}
-          <a href="{{ url_for('.get_product_details', product_id=product.id, page=p, per_page=per_page) }}#offres-non-liees"
-             class="{% if p == page %}active{% endif %}">{{ p }}</a>
-        {% endfor %}
-        <!-- Lien vers la page suivante -->
-        {% if page < total_pages %}
-          <a href="{{ url_for('.get_product_details', product_id=product.id, page=page+1, per_page=per_page) }}#offres-non-liees">Suivant</a>
-        {% endif %}
-      </div>
-    {% endcall %}
+          .pagination-non-linked-offers .active {
+            font-weight: bold;
+          }
+        </style>
+        <div class="pagination-non-linked-offers">
+          {% if page > 1 %}
+            <a href="{{ url_for('.get_product_details', product_id=product.id, page=page-1, per_page=per_page) }}#offres-non-liees">Précédent</a>
+          {% endif %}
+          {% for p in range(1, total_pages + 1) %}
+            <a href="{{ url_for('.get_product_details', product_id=product.id, page=p, per_page=per_page) }}#offres-non-liees"
+               class="{% if p == page %}active{% endif %}">{{ p }}</a>
+          {% endfor %}
+          {% if page < total_pages %}
+            <a href="{{ url_for('.get_product_details', product_id=product.id, page=page+1, per_page=per_page) }}#offres-non-liees">Suivant</a>
+          {% endif %}
+        </div>
+      {% endcall %}
+    {% endif %}
   {% endcall %}
 {% endblock details_container %}
 {% block side_column %}
@@ -402,12 +416,18 @@
     {% call description_detail_vertical("Rejetées") %}
       {{ rejected_offers_count }}
     {% endcall %}
+    {% call description_detail_vertical("Offre non liées") %}
+      {{ total_offer_not_linked }}
+    {% endcall %}
   </div>
 {% endblock side_column %}
 {% block extra_main_content %}
   <!-- HIDDEN FORMS/AND MODALS -->
-  {% if action.WHITELIST in allowed_actions %}
+  {% if action.SYNCHRO_TITELIVE in allowed_actions %}
     {{ build_lazy_modal(url_for('backoffice_web.product.get_product_synchro_with_titelive_form', product_id=product.id) , "synchro-product-modal-" + product.id|string) }}
+  {% endif %}
+  {% if action.WHITELIST in allowed_actions %}
+    {{ build_lazy_modal(url_for('backoffice_web.product.get_product_whitelist_form', product_id=product.id) , "whitelist-product-modal-" + product.id|string) }}
   {% endif %}
   {% if action.BLACKLIST in allowed_actions %}
     {{ build_lazy_modal(url_for('backoffice_web.product.get_product_blacklist_form', product_id=product.id) , "blacklist-product-modal-" + product.id|string) }}

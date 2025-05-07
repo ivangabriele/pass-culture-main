@@ -1219,7 +1219,6 @@ def reject_inappropriate_products(
                 "exc": str(exception),
             },
         )
-        print("1")
         return False
 
     offer_ids = []
@@ -1259,7 +1258,6 @@ def reject_inappropriate_products(
             ),
         )
 
-    print("2")
     return True
 
 

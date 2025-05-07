@@ -189,7 +189,7 @@ class Product(PcObject, Base, Model, HasThumbMixin, ProvidableMixin):
 
     @property
     def offers_dict(self):
-        return [offer.to_dict() for offer in self.offers]
+        return sorted([offer.to_dict() for offer in self.offers], key=lambda offer: offer["id"])
 
     @property
     def subcategory(self) -> subcategories.Subcategory:
@@ -741,11 +741,16 @@ class Offer(PcObject, Base, Model, DeactivableMixin, ValidationMixin, Accessibil
     likesCount: sa_orm.Mapped["int"] = sa_orm.query_expression()
 
     def to_dict(self):
+        from pcapi.routes.backoffice.filters import format_offer_status
+        from pcapi.routes.backoffice.filters import format_date_time
+
         return {
             "id": self.id,
             "name": self.name,
-            "status": self.status,
-            "dateCreated": self.dateCreated.isoformat() if self.dateCreated else None,
+            "venue_name": self.venue.name,
+            "venue_id": self.venue.id,
+            "status": format_offer_status(self.status),
+            "dateCreated": format_date_time(self.dateCreated),
         }
 
     @property

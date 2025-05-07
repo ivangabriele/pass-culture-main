@@ -1,6 +1,7 @@
 import dataclasses
 import enum
 
+import sqlalchemy.orm as sa_orm
 from flask import flash
 from flask import render_template
 from flask import request
@@ -17,10 +18,10 @@ from pcapi.models import db
 from pcapi.models.offer_mixin import OfferValidationStatus
 from pcapi.repository.session_management import mark_transaction_as_invalid
 from pcapi.routes.backoffice import utils
+from pcapi.routes.backoffice.forms import empty as empty_forms
+from pcapi.core.offerers import models as offerers_models
 from pcapi.utils import requests
-
 from . import forms
-
 
 list_products_blueprint = utils.child_backoffice_blueprint(
     "product",
@@ -31,6 +32,7 @@ list_products_blueprint = utils.child_backoffice_blueprint(
 
 
 class ProductDetailsActionType(enum.StrEnum):
+    SYNCHRO_TITELIVE = enum.auto()
     WHITELIST = enum.auto()
     BLACKLIST = enum.auto()
 
@@ -69,6 +71,7 @@ class ProductDetailsActions:
 def _get_product_details_actions(product: offers_models.Product, threshold: int) -> ProductDetailsAction:
     product_details_actions = ProductDetailsActions(threshold)
     if utils.has_current_user_permission(perm_models.Permissions.PRO_FRAUD_ACTIONS):
+        product_details_actions.add_action(ProductDetailsActionType.SYNCHRO_TITELIVE)
         product_details_actions.add_action(ProductDetailsActionType.WHITELIST)
         product_details_actions.add_action(ProductDetailsActionType.BLACKLIST)
 
@@ -85,12 +88,40 @@ def get_product_details(product_id: int) -> utils.BackofficeResponse:
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
 
-    print("ca refait la requetes a chaque fois :skull:")
-    product = offers_models.Product.query.get(product_id)
-    offer_not_linked = db.session.query(offers_models.Offer).filter_by(ean=product.ean).paginate(page, per_page, False)
-    print("???", offer_not_linked.__dict__)
+    product = (
+        db.session.query(offers_models.Product)
+        .filter(offers_models.Product.id == product_id)
+        .options(
+            sa_orm.joinedload(offers_models.Product.offers).options(
+                sa_orm.load_only(
+                    offers_models.Offer.id,
+                    offers_models.Offer.name,
+                    offers_models.Offer.dateCreated,
+                    offers_models.Offer.isActive,
+                    offers_models.Offer.validation,
+                ),
+                sa_orm.joinedload(offers_models.Offer.stocks).options(
+                    sa_orm.load_only(offers_models.Stock.bookingLimitDatetime)
+                ),
+                sa_orm.joinedload(offers_models.Offer.venue).options(
+                    sa_orm.load_only(
+                        offerers_models.Venue.id,
+                        offerers_models.Venue.name,
+                    )
+                ),
+            ),
+            sa_orm.joinedload(offers_models.Product.productMediations),
+        )
+        .one_or_none()
+    )
+
     if not product:
         raise NotFound()
+
+    if product.ean:
+        offer_not_linked = (
+            db.session.query(offers_models.Offer).filter_by(ean=product.ean).paginate(page, per_page, False)
+        )
 
     # editable_stock_ids = set()
     # if product.isEvent and not finance_api.are_cashflows_being_generated():
@@ -141,15 +172,8 @@ def get_product_details(product_id: int) -> utils.BackofficeResponse:
 
     # PRO_FRAUD_ACTIONS
     return render_template(
-        # "products/details.html",
         "products/details.html",
         product=product,
-        # active_tab=request.args.get("active_tab", "stock"),
-        # editable_stock_ids=editable_stock_ids,
-        # reindex_product_form=empty_forms.EmptyForm() if is_advanced_pro_support else None,
-        # edit_product_venue_form=edit_product_venue_form,
-        # move_product_form=move_product_form,
-        # connect_as=connect_as,
         provider_name=product.lastProvider.name if product.lastProvider else None,
         offers_count=len(product.offers),
         active_offers_count=active_offers_count,
@@ -159,8 +183,12 @@ def get_product_details(product_id: int) -> utils.BackofficeResponse:
         rejected_offers_count=rejected_offers_count,
         allowed_actions=allowed_actions,
         action=ProductDetailsActionType,
-        offer_not_linked=offer_not_linked.items,
-        total_pages=offer_not_linked.pages,
+        offer_not_linked=offer_not_linked.items if product.ean else None,
+        total_pages=offer_not_linked.pages if product.ean else 0,
+        total_offer_not_linked=offer_not_linked.total if product.ean else 0,
+        # offer_not_linked=None,  # REMOVE AFTER TEST
+        # total_pages=0,
+        # total_offer_not_linked=0,
         page=page,
         per_page=per_page,
     )
@@ -190,9 +218,8 @@ def shynchro_product_with_titelive(product_id: int) -> utils.BackofficeResponse:
     product = offers_models.Product.query.filter_by(id=product_id).one_or_none()
 
     try:
-        # titelive_product = offers_api.get_new_product_from_ean13(product.ean)
-        # product = offers_api.fetch_or_update_product_with_titelive_data(titelive_product)
-        offers_api.whitelist_product(product.ean)
+        titelive_product = offers_api.get_new_product_from_ean13(product.ean)
+        offers_api.fetch_or_update_product_with_titelive_data(titelive_product)
     except requests.ExternalAPIException as err:
         mark_transaction_as_invalid()
         flash(
@@ -203,7 +230,43 @@ def shynchro_product_with_titelive(product_id: int) -> utils.BackofficeResponse:
         flash("Le produit a été Synchroniser avec Titelive", "success")
 
     return redirect(request.referrer, 303)
-    # return redirect(request.referrer or url_for("backoffice_web.product.list_offers"), 303)
+
+
+@list_products_blueprint.route("/<int:product_id>/whitelist", methods=["GET"])
+@utils.permission_required(perm_models.Permissions.PRO_FRAUD_ACTIONS)
+def get_product_whitelist_form(product_id: int) -> utils.BackofficeResponse:
+    product = offers_models.Product.query.filter_by(id=product_id).one_or_none()
+    if not product:
+        raise NotFound()
+
+    form = empty_forms.EmptyForm()
+    return render_template(
+        "components/turbo/modal_form.html",
+        form=form,
+        dst=url_for("backoffice_web.product.whitelist_product", product_id=product.id),
+        div_id=f"whitelist-product-modal-{product.id}",
+        title=f"Whitelisté le produit  {product.name}",
+        button_text="Whitelisté le produit",
+    )
+
+
+@list_products_blueprint.route("/<int:product_id>/whitelist", methods=["POST"])
+@utils.permission_required(perm_models.Permissions.PRO_FRAUD_ACTIONS)
+def whitelist_product(product_id: int) -> utils.BackofficeResponse:
+    product = offers_models.Product.query.filter_by(id=product_id).one_or_none()
+
+    try:
+        product.gcuCompatibilityType = offers_models.GcuCompatibilityType.COMPATIBLE
+    except requests.ExternalAPIException as err:
+        mark_transaction_as_invalid()
+        flash(
+            Markup("Une erreur s'est produite : {message}").format(message=str(err) or err.__class__.__name__),
+            "warning",
+        )
+    else:
+        flash("Le produit a été Whitelisté", "success")
+
+    return redirect(request.referrer, 303)
 
 
 @list_products_blueprint.route("/<int:product_id>/blacklist", methods=["GET"])
@@ -227,7 +290,6 @@ def get_product_blacklist_form(product_id: int) -> utils.BackofficeResponse:
 @list_products_blueprint.route("/<int:product_id>/blacklist", methods=["POST"])
 @utils.permission_required(perm_models.Permissions.PRO_FRAUD_ACTIONS)
 def blacklist_product(product_id: int) -> utils.BackofficeResponse:
-    print("ALORS")
     product = offers_models.Product.query.filter_by(id=product_id).one_or_none()
 
     if offers_api.reject_inappropriate_products([product.ean], current_user, rejected_by_fraud_action=True):
@@ -239,20 +301,12 @@ def blacklist_product(product_id: int) -> utils.BackofficeResponse:
 
     return redirect(request.referrer, 303)
 
-    # # function qui blacklist
-    # flash("Le produit a été blacklisté", "success")
-    # return redirect(request.referrer, 303)
-    # # return redirect(request.referrer or url_for("backoffice_web.product.list_offers"), 303)
 
-
-# @list_products_blueprint.route("/<int:product_id>/batch-link-offer-to-product-form", methods=["GET", "POST"])
 @list_products_blueprint.route("/<int:product_id>/link_offers/confirm", methods=["GET", "POST"])
 @utils.permission_required(perm_models.Permissions.PRO_FRAUD_ACTIONS)
 def confirm_link_offers_forms(product_id: int) -> utils.BackofficeResponse:
     form = forms.BatchLinkOfferToProductForm()
-    if form.object_ids.data:
-        pass
-    print("OUI")
+
     return render_template(
         "components/turbo/modal_form.html",
         form=form,
@@ -276,3 +330,49 @@ def batch_link_offers_to_product(product_id) -> utils.BackofficeResponse:
     for offer in offers:
         offer.productId = product_id
     return redirect(request.referrer or url_for(".get_product_details", product_id=product_id), 303)
+
+
+def render_search_template(form: forms.ProductSearchForm | None = None) -> str:
+    if form is None:
+        preferences = current_user.backoffice_profile.preferences
+        form = forms.ProductSearchForm()
+
+    return render_template(
+        "products/search.html",
+        title="Recherche produit",
+        dst=url_for(".search_product"),
+        form=form,
+    )
+
+
+@list_products_blueprint.route("/search", methods=["GET"])
+def search_product() -> utils.BackofficeResponse:
+    if not request.args:
+        return render_search_template()
+
+    form = forms.ProductSearchForm(request.args)
+    if not form.validate():
+        return render_search_template(form), 400
+
+    result_type = forms.ProductFilterTypeEnum[form.product_filter_type.data]
+    search_query = form.q.data
+
+    if result_type == forms.ProductFilterTypeEnum.EAN:
+        product = db.session.query(offers_models.Product).filter_by(ean=search_query).one_or_none()
+    elif result_type == forms.ProductFilterTypeEnum.VISA:
+        product = (
+            db.session.query(offers_models.Product)
+            .filter(offers_models.Product.extraData["visa"].astext == search_query)
+            .one_or_none()
+        )
+    elif result_type == forms.ProductFilterTypeEnum.ALLOCINE_ID:
+        product = (
+            db.session.query(offers_models.Product)
+            .filter(offers_models.Product.extraData["allocine_id"].astext == search_query)
+            .one_or_none()
+        )
+
+    if not product:
+        raise NotFound()
+
+    return redirect(url_for(".get_product_details", product_id=product.id), 303)
