@@ -188,10 +188,6 @@ class Product(PcObject, Base, Model, HasThumbMixin, ProvidableMixin):
     sa.Index("unique_ix_product_ean", ean, unique=True)
 
     @property
-    def offers_dict(self):
-        return sorted([offer.to_dict() for offer in self.offers], key=lambda offer: offer["id"])
-
-    @property
     def subcategory(self) -> subcategories.Subcategory:
         if self.subcategoryId not in subcategories.ALL_SUBCATEGORIES_DICT:
             raise ValueError(f"Unexpected subcategoryId '{self.subcategoryId}' for product {self.id}")
@@ -739,19 +735,6 @@ class Offer(PcObject, Base, Model, DeactivableMixin, ValidationMixin, Accessibil
     bookingsCount: sa_orm.Mapped["int"] = sa_orm.query_expression()
     hasPendingBookings: sa_orm.Mapped["bool"] = sa_orm.query_expression()
     likesCount: sa_orm.Mapped["int"] = sa_orm.query_expression()
-
-    def to_dict(self):
-        from pcapi.routes.backoffice.filters import format_offer_status
-        from pcapi.routes.backoffice.filters import format_date_time
-
-        return {
-            "id": self.id,
-            "name": self.name,
-            "venue_name": self.venue.name,
-            "venue_id": self.venue.id,
-            "status": format_offer_status(self.status),
-            "dateCreated": format_date_time(self.dateCreated),
-        }
 
     @property
     def extraData(self) -> OfferExtraData | None:
