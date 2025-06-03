@@ -14,6 +14,7 @@ from pcapi.core.offers import models as offers_models
 from pcapi.core.offers import repository as offers_repository
 from pcapi.core.offers import schemas as offers_schemas
 from pcapi.core.offers.validation import check_for_duplicated_price_categories
+from pcapi.core.users.models import UserTag
 from pcapi.models import api_errors
 from pcapi.models import db
 from pcapi.routes.public import blueprints
@@ -238,6 +239,10 @@ def edit_event(event_id: int, body: serialization.EventOfferEdition) -> serializ
     utils.check_offer_subcategory(body, offer.subcategoryId)
 
     venue, offerer_address = utils.extract_venue_and_offerer_address_from_location(body)
+    if body.targets:
+        tags = db.session.query(UserTag).filter(UserTag.name.in_(body.targets)).all()
+    else:
+        tags = []
 
     try:
         with repository.transaction():
@@ -268,6 +273,7 @@ def edit_event(event_id: int, body: serialization.EventOfferEdition) -> serializ
                 withdrawalDetails=get_field(offer, updates, "itemCollectionDetails", col="withdrawalDetails"),
                 name=get_field(offer, updates, "name"),
                 url=body.location.url if isinstance(body.location, serialization.DigitalLocation) else None,
+                tags=tags,
             )  # type: ignore[call-arg]
             offer = offers_api.update_offer(offer, offer_body, venue=venue, offerer_address=offerer_address)
             if body.image:

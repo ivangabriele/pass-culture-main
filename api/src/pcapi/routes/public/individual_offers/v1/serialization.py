@@ -620,6 +620,14 @@ class OfferEditionBase(serialization.ConfiguredBaseModel):
     id_at_provider: str | None = fields.ID_AT_PROVIDER_WITH_MAX_LENGTH
     name: OfferName | None = fields.OFFER_NAME
     location: PhysicalLocation | DigitalLocation | AddressLocation | None = fields.OFFER_LOCATION
+    targets: list[str] | None
+
+    @pydantic_v1.validator("targets")
+    def validate_tags(cls, targets: list[str]) -> list[str]:
+        for target in targets:
+            if not db.session.query(UserTag).filter_by(name=target).one_or_none():
+                raise ValueError(f"Tag {target} does not exist")
+        return targets
 
     class Config:
         extra = "forbid"

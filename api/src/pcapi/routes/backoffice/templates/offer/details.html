@@ -106,6 +106,16 @@
     {% call nav_section("info", "Détails de l'offre") %}
       <div class="d-flex gap-1">
         <div class="flex-grow-1">
+          {% if offer.tags %}
+            <h5>Publics cible</h5>
+            {% for tag in offer.tags %}
+              <dl class="row">
+                <dd class="col-sm-9">
+                  <span class="badge bg-primary text-white">{{ tag }}</span>
+                </dd>
+              </dl>
+            {% endfor %}
+          {% endif %}
           {% if offer.idAtProvider or offer.ean %}
             <h5>Informations techniques</h5>
             {% if offer.idAtProvider %}

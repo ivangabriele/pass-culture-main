@@ -12,6 +12,7 @@ from pydantic.v1 import validator
 from pcapi.core.offerers import models as offerers_models
 from pcapi.core.offerers import schemas as offerers_schemas
 from pcapi.core.offers import models as offers_models
+from pcapi.core.users.models import UserTag
 from pcapi.routes.serialization import BaseModel
 from pcapi.serialization import utils as serialization_utils
 from pcapi.utils.date import time_to_int
@@ -330,6 +331,7 @@ class UpdateOffer(BaseModel):
     is_national: bool | None = None
 
     should_send_mail: bool | None = None
+    tags: list[UserTag] | None = None
 
     @validator("is_duo")
     def validate_is_duo(cls, is_duo: bool | None) -> bool:
