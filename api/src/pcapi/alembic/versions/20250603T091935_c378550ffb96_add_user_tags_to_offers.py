@@ -19,7 +19,7 @@ def upgrade() -> None:
         sa.Column("offerId", sa.BigInteger(), nullable=False),
         sa.Column("tagId", sa.BigInteger(), nullable=False),
         sa.ForeignKeyConstraint(["tagId"], ["user_tag.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["offerId"], ["user.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["offerId"], ["offer.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("offerId", "tagId", name="unique_offer_tag_mapping"),
     )
