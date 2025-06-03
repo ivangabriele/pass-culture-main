@@ -29,6 +29,7 @@ from pcapi.core.criteria.models import OfferCriterion
 from pcapi.core.educational.models import ValidationRuleCollectiveOfferLink
 from pcapi.core.educational.models import ValidationRuleCollectiveOfferTemplateLink
 from pcapi.core.providers.models import VenueProvider
+from pcapi.core.users.models import UserTag
 from pcapi.models import Base
 from pcapi.models import Model
 from pcapi.models import db
@@ -677,6 +678,15 @@ class ValidationRuleOfferLink(PcObject, Base, Model):
     offerId: int = sa.Column(sa.BigInteger, sa.ForeignKey("offer.id", ondelete="CASCADE"), index=True, nullable=False)
 
 
+class OfferTagMapping(PcObject, Base, Model):
+    __tablename__ = "offer_tag_mapping"
+
+    offerId: int = sa.Column(sa.BigInteger, sa.ForeignKey("offer.id", ondelete="CASCADE"), index=True, nullable=False)
+    tagId: int = sa.Column(sa.BigInteger, sa.ForeignKey("user_tag.id", ondelete="CASCADE"), index=True, nullable=False)
+
+    __table_args__ = (sa.UniqueConstraint("offerId", "tagId", name="unique_offer_tag"),)
+
+
 class Offer(PcObject, Base, Model, DeactivableMixin, ValidationMixin, AccessibilityMixin):
     __tablename__ = "offer"
 
@@ -777,6 +787,7 @@ class Offer(PcObject, Base, Model, DeactivableMixin, ValidationMixin, Accessibil
     eventOpeningHours: sa_orm.Mapped[list["EventOpeningHours"]] = relationship(
         "EventOpeningHours", passive_deletes=True
     )
+    tags: sa_orm.Mapped[list["UserTag"]] = sa_orm.relationship("UserTag", secondary=OfferTagMapping.__table__)
 
     sa.Index("idx_offer_trgm_name", name, postgresql_using="gin")
     sa.Index("offer_idAtProvider", idAtProvider)
