@@ -1,12 +1,14 @@
 import datetime
 import logging
 import os
+import json
 
 import sqlalchemy as sqla
 import sqlalchemy.orm as sa_orm
 from flask import request
 from flask_login import current_user
 from flask_login import login_required
+from google import genai
 from openai import OpenAI
 from werkzeug.exceptions import NotFound
 
@@ -588,389 +590,36 @@ def get_categories() -> offers_serialize.CategoriesResponseModel:
 
 
 def create_prompt(name: str, description: str | None) -> str:
-    prompt = """`
+    descr = "\" DESCRIPTION = \""
+    prompt = """
 Tu es un expert en classification d'offres. Tu es capable de deviner la catégorie et la sous-catégorie d'une offre en fonction de son titre et de sa description.
 
-Voici les catégories et sous-catégories disponibles sous forme d'objet JSON :
+Voici les catégories et sous-catégories disponibles :
+(Catégorie ; category_ID ; Sous-catégorie ; subcategory_ID ; Définition) ; (Beaux-arts ; BEAUX_ARTS ; Matériel arts créatifs ; MATERIEL_ART_CREATIF ; Fournitures utilisées pour les activités de création artistique (peinture, dessin, sculpture, etc.).) ; (Carte jeunes ; CARTE_JEUNES ; Carte jeunes ; CARTE_JEUNES ; Carte offrant des réductions ou avantages culturels aux jeunes (cinéma, concerts, musées, etc.).) ; (Cinéma ; CINEMA ; Carte cinéma illimité ; CARTE_CINE_ILLIMITE ; Abonnement permettant un accès illimité aux séances de cinéma dans un réseau spécifique.) ; (Cinéma ; CINEMA ; Carte cinéma multi-séances ; CARTE_CINE_MULTISEANCES ; Carte prépayée pour un nombre déterminé de séances, avec un retrait physique au guichet du cinéma) ; (Cinéma ; CINEMA ; Cinéma plein air ; CINE_PLEIN_AIR ; Projection de films organisée en extérieur, généralement en été.) ; (Cinéma ; CINEMA ; Séance de cinéma ; SEANCE_CINE ; Billet pour assister à une projection dans une salle de cinéma.) ; (Cinéma ; CINEMA ; Évènement cinématographique ; EVENEMENT_CINE ; Manifestation spéciale autour du cinéma (avant-première, rétrospective, rencontre…)) ; (Cinéma ; CINEMA ; Festival de cinéma ; FESTIVAL_CINE ; Manifestation regroupant la projection de films selon une thématique ou une compétition.) ; (Cinéma ; CINEMA ; Cinéma vente à distance ; CINE_VENTE_DISTANCE ; Achat en ligne de cartes de cinéma avec envoi de la carte par mail au jeune) ; (Conférences, rencontres ; CONFERENCE ; Conférence ; CONFERENCE ; Exposé oral sur un sujet spécifique, souvent avec questions/réponses) ; (Conférences, rencontres ; CONFERENCE ; Rencontre ; RENCONTRE ; Échange direct avec une personnalité ou un expert (auteur, artiste, etc.)) ; (Conférences, rencontres ; CONFERENCE ; Salon, Convention ; SALON ; Évènement rassemblant exposants et visiteurs autour d'un thème (livre, jeu, science…)) ; (Conférences, rencontres ; CONFERENCE ; Rencontre en ligne ; RENCONTRE_EN_LIGNE ; Évènement interactif à distance, souvent via visioconférence.) ; (Films, vidéos ; FILM ; Abonnement médiathèque ; ABO_MEDIATHEQUE ; Accès régulier à une médiathèque incluant films, vidéos, supports culturels.) ; (Films, vidéos ; FILM ; Support physique (DVD, Blu-ray...) ; SUPPORT_PHYSIQUE_FILM ; Achat de films ou vidéos sur support matériel.) ; (Films, vidéos ; FILM ; Abonnement plateforme streaming ; ABO_PLATEFORME_VIDEO ; Abonnement à un service de diffusion de films/séries en ligne.) ; (Films, vidéos ; FILM ; Autre support numérique ; AUTRE_SUPPORT_NUMERIQUE ; Films ou vidéos accessibles en téléchargement ou clé USB, hors plateformes traditionnelles.) ; (Films, vidéos ; FILM ; Vidéo à la demande ; VOD ; Location ou achat ponctuel de films en ligne (à l'unité).) ; (Instrument de musique ; INSTRUMENT ; Achat instrument ; ACHAT_INSTRUMENT ; Acquisition d'un instrument de musique (neuf ou occasion).) ; (Instrument de musique ; INSTRUMENT ; Location instrument ; LOCATION_INSTRUMENT ; Mise à disposition temporaire d'un instrument moyennant un loyer.) ; (Instrument de musique ; INSTRUMENT ; Partition ; PARTITION ; Achat de partitions papier ou numériques pour jouer de la musique.) ; (Instrument de musique ; INSTRUMENT ; Bon d'achat instrument ; BON_ACHAT_INSTRUMENT ; Carte ou crédit valable pour acheter un instrument.) ; (Jeux ; JEU ; Escape game ; ESCAPE_GAME ; Jeu d'évasion grandeur nature basé sur la résolution d'énigmes.) ; (Jeux ; JEU ; Concours - jeux ; CONCOURS ; Participation à un concours ou jeu à visée ludique ou compétitive.) ; (Jeux ; JEU ; Évènements - jeux ; EVENEMENT_JEU ; Manifestation rassemblant joueurs autour d'un jeu ou d'un univers ludique.) ; (Jeux ; JEU ; Rencontres - jeux ; RENCONTRE_JEU ; Session organisée de jeu collectif (soirée jeux de société, tournoi, etc.).) ; (Jeux ; JEU ; Abonnement jeux vidéos ; ABO_JEU_VIDEO ; Accès illimité à une sélection de jeux vidéo via abonnement.) ; (Jeux ; JEU ; Jeux en ligne ; JEU_EN_LIGNE ; Jeux accessibles via internet (MMORPG, plateformes de jeux, etc.).) ; (Livre ; LIVRE ; Abonnement (bibliothèques, médiathèques...) ; ABO_BIBLIOTHEQUE ; Accès régulier à des livres via une structure culturelle.) ; (Livre ; LIVRE ; Livre papier ; LIVRE_PAPIER ; Livre imprimé traditionnel.) ; (Livre ; LIVRE ; Livre audio sur support physique ; LIVRE_AUDIO_PHYSIQUE ; Livre lu enregistré sur CD ou autre support tangible.) ; (Livre ; LIVRE ; Festival et salon du livre ; FESTIVAL_LIVRE ; Évènement dédié à la littérature, auteurs, éditeurs et lecteurs.) ; (Livre ; LIVRE ; Abonnement livres numériques ; ABO_LIVRE_NUMERIQUE ; Accès illimité ou régulier à des e-books via abonnement.) ; (Livre ; LIVRE ; Livre numérique, e-book ; LIVRE_NUMERIQUE ; Fichier téléchargeable lisible sur liseuse, tablette ou ordinateur.) ; (Livre ; LIVRE ; Livre audio à télécharger ; TELECHARGEMENT_LIVRE_AUDIO ; Livre lu disponible en téléchargement, sans support physique.) ; (Musée, patrimoine, architecture, arts visuels ; MUSEE ; Abonnement musée, carte ou pass ; CARTE_MUSEE ; Entrée libre ou réduite à des musées via une carte annuelle.) ; (Musée, patrimoine, architecture, arts visuels ; MUSEE ; Évènement et atelier patrimoine ; EVENEMENT_PATRIMOINE ; Activités pédagogiques ou festives liées au patrimoine historique ou artistique.) ; (Musée, patrimoine, architecture, arts visuels ; MUSEE ; Festival d'arts visuels / arts numériques ; FESTIVAL_ART_VISUEL ; Manifestation autour de la création visuelle contemporaine (installations, projections, VR...).) ; (Musée, patrimoine, architecture, arts visuels ; MUSEE ; Visite guidée ; VISITE_GUIDEE ; Parcours accompagné d'un guide professionnel.) ; (Musée, patrimoine, architecture, arts visuels ; MUSEE ; Visite ; VISITE ; Accès libre à un lieu culturel (musée, monument, expo...).) ; (Musée, patrimoine, architecture, arts visuels ; MUSEE ; Musée vente à distance ; MUSEE_VENTE_DISTANCE ; Billets ou produits liés au musée achetés en ligne) ; (Musée, patrimoine, architecture, arts visuels ; MUSEE ; Visite virtuelle ; VISITE_VIRTUELLE ; Exploration numérique d'un lieu culturel.) ; (Médias ; MEDIA ; Abonnement presse en ligne ; ABO_PRESSE_EN_LIGNE ; Accès payant à des journaux ou magazines numériques.) ; (Médias ; MEDIA ; Application culturelle ; APP_CULTURELLE ; Appli mobile dédiée à la découverte ou l'usage de contenus culturels.) ; (Médias ; MEDIA ; Podcast ; PODCAST ; Émission audio à la demande sur un sujet culturel ou artistique.) ; (Musique enregistrée ; MUSIQUE_ENREGISTREE ; CD ; SUPPORT_PHYSIQUE_MUSIQUE_CD ; Support optique contenant de la musique.) ; (Musique enregistrée ; MUSIQUE_ENREGISTREE ; Vinyles et autres supports ; SUPPORT_PHYSIQUE_MUSIQUE_VINYLE ; Supports analogiques ou alternatifs au CD (vinyle, cassette…).) ; (Musique enregistrée ; MUSIQUE_ENREGISTREE ; Abonnement plateforme musicale ; ABO_PLATEFORME_MUSIQUE ; Accès illimité à un catalogue musical en ligne (Spotify, Deezer…).) ; (Musique enregistrée ; MUSIQUE_ENREGISTREE ; Téléchargement de musique ; TELECHARGEMENT_MUSIQUE ; Achat définitif de fichiers musicaux numériques.) ; (Musique live ; MUSIQUE_LIVE ; Abonnement concert ; ABO_CONCERT ; Pass ou abonnement pour assister à des concerts en illimité ou à tarif réduit.) ; (Musique live ; MUSIQUE_LIVE ; Autre type d'évènement musical ; EVENEMENT_MUSIQUE ; Soirée DJ, jam session, performance musicale hors concert classique.) ; (Musique live ; MUSIQUE_LIVE ; Concert ; CONCERT ; Prestation musicale en direct devant un public.) ; (Musique live ; MUSIQUE_LIVE ; Festival de musique ; FESTIVAL_MUSIQUE ; Manifestation rassemblant plusieurs concerts sur un ou plusieurs jours.) ; (Musique live ; MUSIQUE_LIVE ; Livestream musical ; LIVESTREAM_MUSIQUE ; Concert diffusé en direct sur internet.) ; (Pratique artistique ; PRATIQUE_ART ; Abonnement pratique artistique ; ABO_PRATIQUE_ART ; Accès régulier à des cours ou ateliers de création artistique.) ; (Pratique artistique ; PRATIQUE_ART ; Atelier, stage de pratique artistique ; ATELIER_PRATIQUE_ART ; Session ponctuelle d'apprentissage ou de création (dessin, théâtre, danse…).) ; (Pratique artistique ; PRATIQUE_ART ; Séance d'essai ; SEANCE_ESSAI_PRATIQUE_ART ; Première séance gratuite ou à tarif réduit pour découvrir une activité artistique.) ; (Pratique artistique ; PRATIQUE_ART ; Pratique artistique - vente à distance ; PRATIQUE_ART_VENTE_DISTANCE ; Achat de matériel ou inscription à une activité artistique en ligne.) ; (Pratique artistique ; PRATIQUE_ART ; Pratique artistique - Plateforme en ligne ; PLATEFORME_PRATIQUE_ARTISTIQUE ; Site ou application proposant des cours artistiques à distance.) ; (Pratique artistique ; PRATIQUE_ART ; Pratique artistique - livestream ; LIVESTREAM_PRATIQUE_ARTISTIQUE ; Atelier ou cours artistique diffusé en direct.) ; (Spectacle vivant ; SPECTACLE ; Abonnement spectacle ; ABO_SPECTACLE ; Carte ou forfait donnant accès à plusieurs spectacles.) ; (Spectacle vivant ; SPECTACLE ; Festival de spectacle vivant ; FESTIVAL_SPECTACLE ; Évènement regroupant des représentations scéniques (théâtre, danse, cirque…).) ; (Spectacle vivant ; SPECTACLE ; Spectacle, représentation ; SPECTACLE_REPRESENTATION ; Performance en direct sur scène (théâtre, danse, opéra…).) ; (Spectacle vivant ; SPECTACLE ; Spectacle enregistré ; SPECTACLE_ENREGISTRE ; Captation vidéo d'un spectacle diffusée ultérieurement.) ; (Spectacle vivant ; SPECTACLE ; Spectacle vivant - vente à distance ; SPECTACLE_VENTE_DISTANCE ; Achat de billets pour un spectacle en ligne.) ; (Spectacle vivant ; SPECTACLE ; Livestream d'évènement ; LIVESTREAM_EVENEMENT ; Diffusion en direct d'un spectacle sur internet.)
 
-categories = [
-  { id: 'BEAUX_ARTS', proLabel: 'Beaux-arts' },
-  { id: 'CARTE_JEUNES', proLabel: 'Carte jeunes' },
-  { id: 'CINEMA', proLabel: 'Cinéma' },
-  { id: 'CONFERENCE', proLabel: 'Conférences, rencontres' },
-  { id: 'FILM', proLabel: 'Films, vidéos' },
-  { id: 'INSTRUMENT', proLabel: 'Instrument de musique' },
-  { id: 'JEU', proLabel: 'Jeux' },
-  { id: 'LIVRE', proLabel: 'Livre' },
-  { id: 'MEDIA', proLabel: 'Médias' },
-  { id: 'MUSEE', proLabel: 'Musée, patrimoine, architecture, arts visuels' },
-  { id: 'MUSIQUE_ENREGISTREE', proLabel: 'Musique enregistrée' },
-  { id: 'MUSIQUE_LIVE', proLabel: 'Musique live' },
-  { id: 'PRATIQUE_ART', proLabel: 'Pratique artistique' },
-  { id: 'SPECTACLE', proLabel: 'Spectacle vivant' },
-  { id: 'TECHNIQUE', proLabel: 'Catégorie technique' }
-]
+Avec le titre et la description d'une offre, que je vais t'envoyer, tu dois retourner un objet JSON composé uniquement de subcategory_ID.
 
-subcategories = [
-  {
-    id: 'ABO_BIBLIOTHEQUE',
-    categoryId: 'LIVRE',
-    proLabel: 'Abonnement (bibliothèques, médiathèques...)'
-  },
-  {
-    id: 'ABO_CONCERT',
-    categoryId: 'MUSIQUE_LIVE',
-    proLabel: 'Abonnement concert'
-  },
-  {
-    id: 'ABO_JEU_VIDEO',
-    categoryId: 'JEU',
-    proLabel: 'Abonnement jeux vidéos'
-  },
-  {
-    id: 'ABO_LIVRE_NUMERIQUE',
-    categoryId: 'LIVRE',
-    proLabel: 'Abonnement livres numériques'
-  },
-  {
-    id: 'ABO_LUDOTHEQUE',
-    categoryId: 'JEU',
-    proLabel: 'Abonnement ludothèque'
-  },
-  {
-    id: 'ABO_MEDIATHEQUE',
-    categoryId: 'FILM',
-    proLabel: 'Abonnement médiathèque'
-  },
-  {
-    id: 'ABO_PLATEFORME_MUSIQUE',
-    categoryId: 'MUSIQUE_ENREGISTREE',
-    proLabel: 'Abonnement plateforme musicale'
-  },
-  {
-    id: 'ABO_PLATEFORME_VIDEO',
-    categoryId: 'FILM',
-    proLabel: 'Abonnement plateforme streaming'
-  },
-  {
-    id: 'ABO_PRATIQUE_ART',
-    categoryId: 'PRATIQUE_ART',
-    proLabel: 'Abonnement pratique artistique'
-  },
-  {
-    id: 'ABO_PRESSE_EN_LIGNE',
-    categoryId: 'MEDIA',
-    proLabel: 'Abonnement presse en ligne'
-  },
-  {
-    id: 'ABO_SPECTACLE',
-    categoryId: 'SPECTACLE',
-    proLabel: 'Abonnement spectacle'
-  },
-  {
-    id: 'ACHAT_INSTRUMENT',
-    categoryId: 'INSTRUMENT',
-    proLabel: 'Achat instrument'
-  },
-  {
-    id: 'ACTIVATION_EVENT',
-    categoryId: 'TECHNIQUE',
-    proLabel: "Catégorie technique d'évènement d'activation "
-  },
-  {
-    id: 'ACTIVATION_THING',
-    categoryId: 'TECHNIQUE',
-    proLabel: "Catégorie technique de thing d'activation"
-  },
-  {
-    id: 'APP_CULTURELLE',
-    categoryId: 'MEDIA',
-    proLabel: 'Application culturelle'
-  },
-  {
-    id: 'ATELIER_PRATIQUE_ART',
-    categoryId: 'PRATIQUE_ART',
-    proLabel: 'Atelier, stage de pratique artistique'
-  },
-  {
-    id: 'AUTRE_SUPPORT_NUMERIQUE',
-    categoryId: 'FILM',
-    proLabel: 'Autre support numérique'
-  },
-  {
-    id: 'BON_ACHAT_INSTRUMENT',
-    categoryId: 'INSTRUMENT',
-    proLabel: "Bon d'achat instrument"
-  },
-  {
-    id: 'CAPTATION_MUSIQUE',
-    categoryId: 'MUSIQUE_ENREGISTREE',
-    proLabel: 'Captation musicale'
-  },
-  {
-    id: 'CARTE_CINE_ILLIMITE',
-    categoryId: 'CINEMA',
-    proLabel: 'Carte cinéma illimité'
-  },
-  {
-    id: 'CARTE_CINE_MULTISEANCES',
-    categoryId: 'CINEMA',
-    proLabel: 'Carte cinéma multi-séances'
-  },
-  {
-    id: 'CARTE_JEUNES',
-    categoryId: 'CARTE_JEUNES',
-    proLabel: 'Carte jeunes'
-  },
-  {
-    id: 'CARTE_MUSEE',
-    categoryId: 'MUSEE',
-    proLabel: 'Abonnement musée, carte ou pass'
-  },
-  {
-    id: 'CINE_PLEIN_AIR',
-    categoryId: 'CINEMA',
-    proLabel: 'Cinéma plein air'
-  },
-  {
-    id: 'CINE_VENTE_DISTANCE',
-    categoryId: 'CINEMA',
-    proLabel: 'Cinéma vente à distance'
-  },
-  { id: 'CONCERT', categoryId: 'MUSIQUE_LIVE', proLabel: 'Concert' },
-  { id: 'CONCOURS', categoryId: 'JEU', proLabel: 'Concours - jeux' },
-  {
-    id: 'CONFERENCE',
-    categoryId: 'CONFERENCE',
-    proLabel: 'Conférence'
-  },
-  {
-    id: 'DECOUVERTE_METIERS',
-    categoryId: 'CONFERENCE',
-    proLabel: 'Découverte des métiers'
-  },
-  { id: 'ESCAPE_GAME', categoryId: 'JEU', proLabel: 'Escape game' },
-  {
-    id: 'EVENEMENT_CINE',
-    categoryId: 'CINEMA',
-    proLabel: 'Évènement cinématographique'
-  },
-  {
-    id: 'EVENEMENT_JEU',
-    categoryId: 'JEU',
-    proLabel: 'Évènements - jeux'
-  },
-  {
-    id: 'EVENEMENT_MUSIQUE',
-    categoryId: 'MUSIQUE_LIVE',
-    proLabel: "Autre type d'évènement musical"
-  },
-  {
-    id: 'EVENEMENT_PATRIMOINE',
-    categoryId: 'MUSEE',
-    proLabel: 'Évènement et atelier patrimoine'
-  },
-  {
-    id: 'FESTIVAL_ART_VISUEL',
-    categoryId: 'MUSEE',
-    proLabel: "Festival d'arts visuels / arts numériques"
-  },
-  {
-    id: 'FESTIVAL_CINE',
-    categoryId: 'CINEMA',
-    proLabel: 'Festival de cinéma'
-  },
-  {
-    id: 'FESTIVAL_LIVRE',
-    categoryId: 'LIVRE',
-    proLabel: 'Festival et salon du livre'
-  },
-  {
-    id: 'FESTIVAL_MUSIQUE',
-    categoryId: 'MUSIQUE_LIVE',
-    proLabel: 'Festival de musique'
-  },
-  {
-    id: 'FESTIVAL_SPECTACLE',
-    categoryId: 'SPECTACLE',
-    proLabel: 'Festival de spectacle vivant'
-  },
-  { id: 'JEU_EN_LIGNE', categoryId: 'JEU', proLabel: 'Jeux en ligne' },
-  {
-    id: 'JEU_SUPPORT_PHYSIQUE',
-    categoryId: 'TECHNIQUE',
-    proLabel: 'Catégorie technique Jeu support physique'
-  },
-  {
-    id: 'LIVESTREAM_EVENEMENT',
-    categoryId: 'SPECTACLE',
-    proLabel: "Livestream d'évènement"
-  },
-  {
-    id: 'LIVESTREAM_MUSIQUE',
-    categoryId: 'MUSIQUE_LIVE',
-    proLabel: 'Livestream musical'
-  },
-  {
-    id: 'LIVESTREAM_PRATIQUE_ARTISTIQUE',
-    categoryId: 'PRATIQUE_ART',
-    proLabel: 'Pratique artistique - livestream'
-  },
-  {
-    id: 'LIVRE_AUDIO_PHYSIQUE',
-    categoryId: 'LIVRE',
-    proLabel: 'Livre audio sur support physique'
-  },
-  {
-    id: 'LIVRE_NUMERIQUE',
-    categoryId: 'LIVRE',
-    proLabel: 'Livre numérique, e-book'
-  },
-  { id: 'LIVRE_PAPIER', categoryId: 'LIVRE', proLabel: 'Livre papier' },
-  {
-    id: 'LOCATION_INSTRUMENT',
-    categoryId: 'INSTRUMENT',
-    proLabel: 'Location instrument'
-  },
-  {
-    id: 'MATERIEL_ART_CREATIF',
-    categoryId: 'BEAUX_ARTS',
-    proLabel: 'Matériel arts créatifs'
-  },
-  {
-    id: 'MUSEE_VENTE_DISTANCE',
-    categoryId: 'MUSEE',
-    proLabel: 'Musée vente à distance'
-  },
-  {
-    id: 'OEUVRE_ART',
-    categoryId: 'TECHNIQUE',
-    proLabel: "Catégorie technique d'oeuvre d'art"
-  },
-  { id: 'PARTITION', categoryId: 'INSTRUMENT', proLabel: 'Partition' },
-  {
-    id: 'PLATEFORME_PRATIQUE_ARTISTIQUE',
-    categoryId: 'PRATIQUE_ART',
-    proLabel: 'Pratique artistique - plateforme en ligne'
-  },
-  {
-    id: 'PRATIQUE_ART_VENTE_DISTANCE',
-    categoryId: 'PRATIQUE_ART',
-    proLabel: 'Pratique artistique - vente à distance'
-  },
-  { id: 'PODCAST', categoryId: 'MEDIA', proLabel: 'Podcast' },
-  {
-    id: 'RENCONTRE_EN_LIGNE',
-    categoryId: 'CONFERENCE',
-    proLabel: 'Rencontre en ligne'
-  },
-  {
-    id: 'RENCONTRE_JEU',
-    categoryId: 'JEU',
-    proLabel: 'Rencontres - jeux'
-  },
-  { id: 'RENCONTRE', categoryId: 'CONFERENCE', proLabel: 'Rencontre' },
-  {
-    id: 'SALON',
-    categoryId: 'CONFERENCE',
-    proLabel: 'Salon, Convention'
-  },
-  {
-    id: 'SEANCE_CINE',
-    categoryId: 'CINEMA',
-    proLabel: 'Séance de cinéma'
-  },
-  {
-    id: 'SEANCE_ESSAI_PRATIQUE_ART',
-    categoryId: 'PRATIQUE_ART',
-    proLabel: "Séance d'essai"
-  },
-  {
-    id: 'SPECTACLE_ENREGISTRE',
-    categoryId: 'SPECTACLE',
-    proLabel: 'Spectacle enregistré'
-  },
-  {
-    id: 'SPECTACLE_REPRESENTATION',
-    categoryId: 'SPECTACLE',
-    proLabel: 'Spectacle, représentation'
-  },
-  {
-    id: 'SPECTACLE_VENTE_DISTANCE',
-    categoryId: 'SPECTACLE',
-    proLabel: 'Spectacle vivant - vente à distance'
-  },
-  {
-    id: 'SUPPORT_PHYSIQUE_FILM',
-    categoryId: 'FILM',
-    proLabel: 'Support physique (DVD, Blu-ray...)'
-  },
-  {
-    id: 'SUPPORT_PHYSIQUE_MUSIQUE_CD',
-    categoryId: 'MUSIQUE_ENREGISTREE',
-    proLabel: 'CD'
-  },
-  {
-    id: 'SUPPORT_PHYSIQUE_MUSIQUE_VINYLE',
-    categoryId: 'MUSIQUE_ENREGISTREE',
-    proLabel: 'Vinyles et autres supports'
-  },
-  {
-    id: 'TELECHARGEMENT_LIVRE_AUDIO',
-    categoryId: 'LIVRE',
-    proLabel: 'Livre audio à télécharger'
-  },
-  {
-    id: 'TELECHARGEMENT_MUSIQUE',
-    categoryId: 'MUSIQUE_ENREGISTREE',
-    proLabel: 'Téléchargement de musique'
-  },
-  {
-    id: 'VISITE_GUIDEE',
-    categoryId: 'MUSEE',
-    proLabel: 'Visite guidée'
-  },
-  {
-    id: 'VISITE_VIRTUELLE',
-    categoryId: 'MUSEE',
-    proLabel: 'Visite virtuelle'
-  },
-  { id: 'VISITE', categoryId: 'MUSEE', proLabel: 'Visite' },
-  { id: 'VOD', categoryId: 'FILM', proLabel: 'Vidéo à la demande' }
-]
+À noter que le domaine d'activité est le domaine de la culture et des offres culturelles au sens large. Tu utiliseras donc tes connaissances dans les offres culturelles, ainsi que des recherches web, pour trouver systématiquement la bonne sous-catégorie. Il ne t'est pas possible de ne pas proposer de sous-catégorie. Mais tu ne dois pas te tromper ! Assure-toi bien de faire les recherches nécessaires pour ne pas choisir n'importe quoi.
 
-La relation entre les catégories et les sous-catégories se fait par l'ID de la catégorie dans chaque objet de sous-catégories.
+Voici l'offre concernée :
 
-Tu dois retourner un objet JSON avec les clés "category" et "subcategory" qui sont les ID des catégories et sous-catégories correspondantes.
-
-Voici un exemple de ce que tu dois faire systématiquement :
-
-Pour le texte entrant suivant "Guitare acoustique excellent état" tu dois retourner :
-
-{
-  "category": "INSTRUMENT",
-  "subcategory": "ACHAT_INSTRUMENT"
-}
-
-Pour le texte entrant suivant "Abonnement à la presse en ligne" tu dois retourner :
-
-{
-  "category": "MEDIA",
-  "subcategory": "ABO_PRESSE_EN_LIGNE"
-}
-
-Tu devras TOUJOURS retourner un objet JSON avec les clés "category" et "subcategory". Si tu ne trouves pas la catégorie, tu dois retourner "category": "TECHNIQUE".
-Et si tu ne trouves pas la sous-catégorie, tu dois retourner "subcategory": "AUTRE".
-
-À noter que le domaine d'activité est le domaine de la culture et des offres culturelles au sens large. Tu utilisera donc tes connaissances dans les offres culturelles pour trouver la catégorie et la sous-catégorie.
-
-Voici le texte entrant : """
+TITRE = "
+"""
     if description:
-        return prompt + name + " " + description
-    return prompt + name
+        return prompt + name + descr + description
+    return prompt + name + "\""
 
 
 # HACKATON bdalbianco
+"""notes
+pip install openapi
+pip install openai
+pip install google-genai
+
+Version demo : renvoyer sous-categorie (et categ?)
+version prod: ne pas renvoyer les infos, les mettre direct en bdd
+version cron: stocker en excel? autre bdd? csv?
+"""
 @private_api.route("/offers/categories_automatic", methods=["POST"])
 # @login_required
 # @spectree_serialize(
@@ -980,22 +629,32 @@ Voici le texte entrant : """
 # )
 # @atomic()
 def fetch_categories_auto() -> dict:
-    # if FeatureToggle.WIP_HACKATON_AUTOMATICALLY_ASSIGN_OFFER_CATEGORY:
+    # if FeatureToggle.WIP_HACKATON_CATEGOTOMATIQUE_AUTOMATICALLY_ASSIGN_OFFER_CATEGORY:
+    
+    #Get data from request and create prompt
     data = request.get_json()
     name = data.get("name")
     description = data.get("description")
     prompt = create_prompt(name, description)
 
+# if FeatureToggle.WIP_HACKATON_CATEGOTOMATIQUE_USE_CHATGPT:
+    #Setup the api
     api_key = os.environ.get("OPENAPI_KEY")
     client = OpenAI(api_key=api_key)
+    #get result
     completion = client.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": prompt}])
-    import json
-
-    print(completion)
-    print(json.loads(completion.choices[0].message.content))
+    
+    #format response
     res = json.loads(completion.choices[0].message.content)
-    print(res["category"], res["subcategory"])
     return res
+# elif FeatureToggle.WIP_HACKATON_CATEGOTOMATIQUE_USE_GEMINI:
+    # api_key = os.environ.get("GEMINI_API_KEY")
+    # client = genai.Client(api_key=api_key)
+    # response = client.models.generate_content(
+    #     model="gemini-2.0-flash", contents=prompt
+    # )
+    # print(response.text, response)
+    # return {}
 
 
 @private_api.route("/offers/music-types", methods=["GET"])
