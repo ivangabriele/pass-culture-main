@@ -7,6 +7,7 @@ from flask_wtf import FlaskForm
 from pcapi.connectors.dms import models as dms_models
 from pcapi.core.fraud import models as fraud_models
 from pcapi.core.users import models as users_models
+from pcapi.models import db
 from pcapi.routes.backoffice import filters
 from pcapi.routes.backoffice.forms import fields
 from pcapi.routes.backoffice.forms import search
@@ -164,3 +165,16 @@ class EditUserTagForm(UserTagBaseForm):
 
 class CreateUserTagCategoryForm(UserTagBaseForm):
     pass
+
+
+def _get_tags_query():
+    return db.session.query(users_models.UserTag).order_by(users_models.UserTag.name)
+
+
+class EditAccountTagsForm(FlaskForm):
+    tags = fields.PCQuerySelectMultipleField(
+        "Tags",
+        query_factory=_get_tags_query,
+        get_pk=lambda tag: tag.id,
+        get_label=lambda tag: tag.label or tag.name,
+    )

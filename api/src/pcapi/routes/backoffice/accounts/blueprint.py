@@ -408,6 +408,13 @@ def render_public_account_details(
         kwargs["anonymize_form"] = empty_forms.EmptyForm()
         kwargs["anonymize_public_accounts_dst"] = url_for(".anonymize_public_account", user_id=user.id)
 
+    kwargs.update(
+        {
+            "tag_account_form": account_forms.EditAccountTagsForm(tags=user.tags),
+            "tag_account_dst": url_for(".edit_public_account_tags", user_id=user.id),
+        }
+    )
+
     fraud_reviews_desc = _get_fraud_reviews_desc(user.beneficiaryFraudReviews)
     id_check_histories_desc = _get_id_check_histories_desc(eligibility_history)
     tunnel = _get_tunnel(user, eligibility_history, fraud_reviews_desc)
@@ -440,6 +447,7 @@ def render_public_account_details(
         active_tab=request.args.get("active_tab", "registration"),
         show_personal_info=True,
         has_gdpr_extract=has_gdpr_extract(user=user),
+        user_tag=user.tags[0].description if user.tags else None,
         **kwargs,
     )
 
@@ -1676,6 +1684,26 @@ def _get_progress(steps: list[RegistrationStep]) -> float:
 @utils.permission_required(perm_models.Permissions.READ_PUBLIC_ACCOUNT)
 def get_public_account(user_id: int) -> utils.BackofficeResponse:
     return render_public_account_details(user_id)
+
+
+@public_accounts_blueprint.route("/<int:user_id>/tags", methods=["POST"])
+@utils.permission_required(perm_models.Permissions.MANAGE_PUBLIC_ACCOUNT)
+def edit_public_account_tags(user_id: int) -> utils.BackofficeResponse:
+    user = db.session.query(users_models.User).filter_by(id=user_id).one_or_none()
+    if not user:
+        raise NotFound()
+    form = account_forms.EditAccountTagsForm()
+
+    if not form.validate():
+        flash(utils.build_form_error_msg(form), "warning")
+        return redirect(url_for(".get_public_account", user_id=user_id), code=303)
+
+    user.tags = form.tags.data
+    db.session.add(user)
+    db.session.flush()
+    flash("Les nouveaux tags ont été mis à jour", "success")
+
+    return redirect(url_for(".get_public_account", user_id=user_id), code=303)
 
 
 @public_accounts_blueprint.route("/<int:user_id>", methods=["POST"])

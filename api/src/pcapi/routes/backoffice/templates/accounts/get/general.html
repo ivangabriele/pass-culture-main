@@ -12,6 +12,7 @@
             {{ username }}
             <span class="ms-1">{{ clipboard.copy_to_clipboard(username, "Copier l'état civil") }}</span>
             {% for role in user.roles %}{{ role | format_role(deposits=user.deposits) | format_badge("primary") }}{% endfor %}
+            {{ user_tag | format_badge("primary") }}
             {% if not user.isActive %}
               {% set user_label %}
                 {{ user.isActive | format_state }}
@@ -176,6 +177,11 @@
             {% if manual_review_form %}
               <div>
                 {{ build_modal_form("review-public-account", manual_review_dst, manual_review_form, "Revue manuelle", "Revue manuelle", "Enregistrer") }}
+              </div>
+            {% endif %}
+            {% if tag_account_form %}
+              <div>
+                {{ build_modal_form("tag-public-account", tag_account_dst, tag_account_form, "Modifier les tags", "Modifier les tags", "Enregistrer") }}
               </div>
             {% endif %}
             {% if anonymize_form %}
