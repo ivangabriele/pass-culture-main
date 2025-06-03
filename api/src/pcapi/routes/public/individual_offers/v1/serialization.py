@@ -19,6 +19,8 @@ from pcapi.core.finance import utils as finance_utils
 from pcapi.core.offers import models as offers_models
 from pcapi.core.providers import constants
 from pcapi.core.providers.constants import TITELIVE_MUSIC_TYPES
+from pcapi.core.users.models import UserTag
+from pcapi.models import db
 from pcapi.models import offer_mixin
 from pcapi.routes import serialization
 from pcapi.routes.public.documentation_constants import descriptions
@@ -561,6 +563,14 @@ class EventOfferCreation(OfferCreationBase):
     price_categories: list[PriceCategoryCreation] | None = fields.PRICE_CATEGORIES_WITH_MAX_ITEMS
     publication_date: datetime.datetime | None = fields.OFFER_PUBLICATION_DATE
     enable_double_bookings: bool | None = fields.OFFER_ENABLE_DOUBLE_BOOKINGS_ENABLED
+    targets: list[str] | None
+
+    @pydantic_v1.validator("targets")
+    def validate_tags(cls, targets: list[str]) -> list[str]:
+        for target in targets:
+            if not db.session.query(UserTag).filter_by(name=target).one_or_none():
+                raise ValueError(f"Tag {target} does not exist")
+        return targets
 
     @pydantic_v1.validator("price_categories")
     def get_unique_price_categories(

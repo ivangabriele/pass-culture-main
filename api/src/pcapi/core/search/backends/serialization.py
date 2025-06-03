@@ -126,6 +126,9 @@ class AlgoliaSerializationMixin:
         date_created = offer.dateCreated.timestamp()
         tags = [criterion.name for criterion in offer.criteria]
 
+        user_tags = db.session.query(offers_models.OfferTagMapping).filter_by(offer_id=offer.id).all()
+        tags.extend([tag.tag.name for tag in user_tags])
+
         extra_data = offer.product.extraData if offer.product and offer.product.extraData else offer.extraData or {}
 
         extra_data_artists = []
