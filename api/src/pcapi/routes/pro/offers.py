@@ -1,7 +1,7 @@
 import datetime
+import json
 import logging
 import os
-import json
 
 import sqlalchemy as sqla
 import sqlalchemy.orm as sa_orm
@@ -11,6 +11,8 @@ from flask_login import login_required
 from google import genai
 from openai import OpenAI
 from werkzeug.exceptions import NotFound
+from pcapi.repository import repository
+import pcapi.core.offers.models as offers_models
 
 import pcapi.core.offerers.api as offerers_api
 import pcapi.core.offers.api as offers_api
@@ -590,7 +592,7 @@ def get_categories() -> offers_serialize.CategoriesResponseModel:
 
 
 def create_prompt(name: str, description: str | None) -> str:
-    descr = "\" DESCRIPTION = \""
+    descr = '" DESCRIPTION = "'
     prompt = """
 Tu es un expert en classification d'offres. Tu es capable de deviner la catégorie et la sous-catégorie d'une offre en fonction de son titre et de sa description.
 
@@ -607,7 +609,7 @@ TITRE = "
 """
     if description:
         return prompt + name + descr + description
-    return prompt + name + "\""
+    return prompt + name + '"'
 
 
 # HACKATON bdalbianco
@@ -620,6 +622,51 @@ Version demo : renvoyer sous-categorie (et categ?)
 version prod: ne pas renvoyer les infos, les mettre direct en bdd
 version cron: stocker en excel? autre bdd? csv?
 """
+
+
+
+def core_select_category_auto(name: str, description: str | None) -> dict:
+    """this is the core function of the project. First we get the prompt
+    Then we set up the model (chatgpt or openai for now)
+    then we send the prompt and get the response"""
+    #create prompt
+    prompt = create_prompt(name, description)
+
+    # if FeatureToggle.WIP_HACKATON_CATEGOTOMATIQUE_USE_CHATGPT:
+    # Setup the api
+    api_key = os.environ.get("OPENAPI_KEY")
+    client = OpenAI(api_key=api_key)
+    # get result
+    completion = client.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": prompt}])
+
+    # format response
+    res = json.loads(completion.choices[0].message.content)
+    # res["subcategory_ID"]
+    return res
+    # elif FeatureToggle.WIP_HACKATON_CATEGOTOMATIQUE_USE_GEMINI:
+    # api_key = os.environ.get("GEMINI_API_KEY")
+    # client = genai.Client(api_key=api_key)
+    # response = client.models.generate_content(
+    #     model="gemini-2.0-flash", contents=prompt
+    # )
+    # print(response.text, response)
+    # return {}
+
+def fetch_categories_batch() -> dict:
+
+    query = db.session.query(offers_models.Offer).order_by(offers_models.Offer.id.desc()).limit(5)
+    for elem in query:
+        res = core_select_category_auto(elem.name, elem.description)["subcategory_ID"]
+        elem.subcategoryId = res
+
+        setattr(elem, "subcategoryId", res)
+        repository.add_to_session(elem)
+
+    query_bis = db.session.query(offers_models.Offer).order_by(offers_models.Offer.id.desc()).limit(5).all()
+    for x in query_bis:
+        print(x.subcategoryId)
+    return None
+
 @private_api.route("/offers/categories_automatic", methods=["POST"])
 # @login_required
 # @spectree_serialize(
@@ -629,32 +676,24 @@ version cron: stocker en excel? autre bdd? csv?
 # )
 # @atomic()
 def fetch_categories_auto() -> dict:
+    """route function"""
     # if FeatureToggle.WIP_HACKATON_CATEGOTOMATIQUE_AUTOMATICALLY_ASSIGN_OFFER_CATEGORY:
-    
-    #Get data from request and create prompt
+
+    # Get data from request
     data = request.get_json()
     name = data.get("name")
     description = data.get("description")
-    prompt = create_prompt(name, description)
+    # return core_select_category_auto(name, description)
 
-# if FeatureToggle.WIP_HACKATON_CATEGOTOMATIQUE_USE_CHATGPT:
-    #Setup the api
-    api_key = os.environ.get("OPENAPI_KEY")
-    client = OpenAI(api_key=api_key)
-    #get result
-    completion = client.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": prompt}])
-    
-    #format response
-    res = json.loads(completion.choices[0].message.content)
-    return res
-# elif FeatureToggle.WIP_HACKATON_CATEGOTOMATIQUE_USE_GEMINI:
-    # api_key = os.environ.get("GEMINI_API_KEY")
-    # client = genai.Client(api_key=api_key)
-    # response = client.models.generate_content(
-    #     model="gemini-2.0-flash", contents=prompt
-    # )
-    # print(response.text, response)
-    # return {}
+    """batch prototype function"""
+    # fetch_categories_batch()
+
+    """prod function"""
+    core_select_category_auto(name, description)
+
+    return {}
+
+
 
 
 @private_api.route("/offers/music-types", methods=["GET"])
