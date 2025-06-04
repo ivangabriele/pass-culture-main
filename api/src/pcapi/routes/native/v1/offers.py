@@ -17,6 +17,8 @@ from pcapi.models.api_errors import ResourceNotFoundError
 from pcapi.models.offer_mixin import OfferValidationStatus
 from pcapi.repository.session_management import atomic
 from pcapi.routes.native.security import authenticated_and_active_user_required
+from pcapi.routes.native.security import authenticated_user_not_required
+from pcapi.routes.native.security import user_is_target_public
 from pcapi.serialization.decorator import spectree_serialize
 from pcapi.workers import push_notification_job
 
@@ -31,14 +33,16 @@ from .serialization import subcategories_v2 as subcategories_v2_serializers
     response_model=serializers.OfferResponse, api=blueprint.api, on_error_statuses=[404], deprecated=True
 )
 @atomic()
-def get_offer(offer_id: str) -> serializers.OfferResponse:
-    query = repository.get_offers_details([int(offer_id)])
-    offer = query.first_or_404()
+@authenticated_user_not_required
+def get_offer(user: User, offer_id: str) -> serializers.OfferResponse:
+    offer = repository.get_offers_details([int(offer_id)]).first()
+    if offer is None or not user_is_target_public(user, offer.tags):
+        raise ResourceNotFoundError()
+    else:
+        if offer.isActive:
+            api.update_stock_quantity_to_match_cinema_venue_provider_remaining_places(offer)
 
-    if offer.isActive:
-        api.update_stock_quantity_to_match_cinema_venue_provider_remaining_places(offer)
-
-    return serializers.OfferResponse.from_orm(offer)
+        return serializers.OfferResponse.from_orm(offer)
 
 
 @blueprint.native_route("/offer/<int:offer_id>", version="v2", methods=["GET"])

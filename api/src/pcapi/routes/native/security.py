@@ -9,6 +9,7 @@ from flask_jwt_extended.utils import get_jwt_identity
 from flask_jwt_extended.view_decorators import jwt_required
 
 from pcapi.core.users.models import User
+from pcapi.core.users.models import UserTag
 from pcapi.core.users.repository import find_user_by_email
 from pcapi.models.api_errors import ForbiddenError
 from pcapi.routes.native.blueprint import JWT_AUTH
@@ -46,8 +47,11 @@ def authenticated_maybe_inactive_user_required(route_function: RouteFunc) -> Rou
     return retrieve_authenticated_user
 
 
-def setup_context(must_be_active: bool = True) -> User:
+def setup_context(user_required: bool = True, must_be_active: bool = True) -> User | None:
     email = get_jwt_identity()
+    if not user_required and email is None:
+        return None
+
     user = find_user_by_email(email)
 
     if must_be_active:
@@ -71,3 +75,23 @@ def setup_context(must_be_active: bool = True) -> User:
     sentry_sdk.set_tag("device.id", request.headers.get("device-id", None))
 
     return user
+
+
+def authenticated_user_not_required(route_function: RouteFunc) -> RouteDecorator:
+    add_security_scheme(route_function, JWT_AUTH)
+
+    @wraps(route_function)
+    @jwt_required(optional=True)
+    def retrieve_authenticated_user(*args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+        user = setup_context(user_required=False)
+        return route_function(user, *args, **kwargs)
+
+    return retrieve_authenticated_user
+
+
+def user_is_target_public(user: User, targets: list[UserTag]) -> bool:
+    if targets is None or len(targets) == 0:
+        return True
+    if user is None or user.tags is None or len(user.tags) == 0:
+        return False
+    return len(list(set([tag.name for tag in user.tags]).intersection([tag.name for tag in targets]))) > 0
