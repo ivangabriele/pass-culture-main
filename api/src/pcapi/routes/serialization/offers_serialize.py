@@ -224,6 +224,8 @@ class ListOffersOfferResponseModelsGetterDict(GetterDict):
             return self._obj.is_headline_offer
         if key == "address":
             return offer_address_getter_dict_helper(self._obj)
+        if key == "targets":
+            return [tag.label for tag in self._obj.tags if len(self._obj.tags) > 0]
         return super().get(key, default)
 
 
@@ -246,6 +248,7 @@ class ListOffersOfferResponseModel(BaseModel):
     isShowcase: bool | None
     address: AddressResponseIsLinkedToVenueModel | None
     isDigital: bool
+    targets: list[str] | None
 
     class Config:
         json_encoders = {datetime.datetime: format_into_utc_date}
@@ -472,6 +475,9 @@ class IndividualOfferResponseGetterDict(GetterDict):
                 ),
                 None,
             )
+
+        if key == "targets":
+            return [tag.label for tag in self._obj.tags if len(self._obj.tags) > 0]
         return super().get(key, default)
 
 
@@ -520,6 +526,7 @@ class GetIndividualOfferResponseModel(BaseModel, AccessibilityComplianceMixin):
     status: OfferStatus
     isNonFreeOffer: bool | None
     eventOpeningHours: GetEventOpeningHoursResponseModel | None
+    targets: list[str] | None
 
     class Config:
         orm_mode = True

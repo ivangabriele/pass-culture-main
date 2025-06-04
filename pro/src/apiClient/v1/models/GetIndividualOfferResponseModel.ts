@@ -43,6 +43,7 @@ export type GetIndividualOfferResponseModel = {
   publicationDate?: string | null;
   status: OfferStatus;
   subcategoryId: SubcategoryIdEnum;
+  targets?: Array<string> | null;
   thumbUrl?: string | null;
   url?: string | null;
   venue: GetOfferVenueResponseModel;

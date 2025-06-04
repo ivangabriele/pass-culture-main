@@ -24,6 +24,7 @@ export type ListOffersOfferResponseModel = {
   status: OfferStatus;
   stocks: Array<ListOffersStockResponseModel>;
   subcategoryId: SubcategoryIdEnum;
+  targets?: Array<string> | null;
   thumbUrl?: string | null;
   venue: ListOffersVenueResponseModel;
 };

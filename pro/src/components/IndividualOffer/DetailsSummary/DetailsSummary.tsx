@@ -56,6 +56,10 @@ export function DetailsSummaryScreen({ offer }: DetailsSummaryScreenProps) {
 
   const aboutDescriptions: Description[] = [
     {
+      title: 'Publics cibles',
+      text: offer.targets || 'Grand public',
+    },
+    {
       title: 'Structure',
       text: offerData.venuePublicName || offerData.venueName,
     },
