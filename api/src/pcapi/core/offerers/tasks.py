@@ -72,7 +72,12 @@ def check_offerer_siren(payload: CheckOffererSirenRequest) -> None:
         return
 
     try:
-        siren_info = sirene.get_siren(payload.siren, with_address=False, raise_if_non_public=False)
+        siren_info = sirene.get_siren(
+            payload.siren,
+            with_address=False,
+            raise_if_non_public=False,
+            timeout=offerers_constants.SIRENE_TIMEOUT_IN_TASKS,
+        )
     except entreprise_exceptions.SireneException:
         try:
             siren_info = entreprise_api.get_siren(payload.siren, with_address=False, raise_if_non_public=False)
