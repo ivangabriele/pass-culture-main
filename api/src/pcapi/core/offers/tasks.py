@@ -155,6 +155,9 @@ def _get_existing_offers(
     model=offers_schemas.CreateOrUpdateEANOffersRequest,
 )
 def create_or_update_ean_offers_celery(payload: offers_schemas.CreateOrUpdateEANOffersRequest) -> None:
+    import time
+
+    time.sleep(60)
     create_or_update_ean_offers(
         serialized_products_stocks=payload.serialized_products_stocks,
         venue_id=payload.venue_id,

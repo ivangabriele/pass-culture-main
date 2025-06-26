@@ -123,6 +123,28 @@ def build_main_app():
     # pytest_flask_sqlalchemy.
     app.teardown_request_funcs[None].remove(remove_db_session)
 
+    from pcapi import settings as pcapi_settings
+
+    app.config.from_mapping(
+        CELERY=dict(
+            broker_url=pcapi_settings.REDIS_URL,
+            task_acks_late=True,
+            task_reject_on_worker_lost=True,
+            task_serializer="json",
+            result_serializer="json",
+            accept_content=["json"],
+            # We must prefix celery queues with "celery." to easily monitor
+            # their length using the redis prometheus exporter
+            task_routes={
+                "tasks.mails.default.*": {"queue": "celery.external_calls.default"},
+                "tasks.mails.priority.*": {"queue": "celery.external_calls.priority"},
+                "tasks.offers.default.*": {"queue": "celery.internal_calls.default"},
+                "tasks.offers.priority.*": {"queue": "celery.internal_calls.priority"},
+            },
+            task_ignore_result=True,
+        ),
+    )
+
     celery_init_app(app)
 
     with app.app_context():

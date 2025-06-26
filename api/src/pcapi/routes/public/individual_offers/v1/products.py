@@ -310,7 +310,9 @@ def post_product_offer_by_ean(body: serialization.ProductsOfferByEanCreation) ->
             address_id=address_id,
             address_label=address_label,
         )
-        offers_tasks.create_or_update_ean_offers_celery.delay(payload.dict())
+        result = offers_tasks.create_or_update_ean_offers_celery.apply_async(kwargs={"payload": payload.dict()})
+        result = result.get()
+        print(result)
     else:
         offers_tasks.create_or_update_ean_offers_rq.delay(
             serialized_products_stocks=serialized_products_stocks,
