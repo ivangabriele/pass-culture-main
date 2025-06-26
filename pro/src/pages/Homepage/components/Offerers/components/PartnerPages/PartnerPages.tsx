@@ -13,8 +13,8 @@ import {
   getSavedPartnerPageVenueId,
   setSavedPartnerPageVenueId,
 } from 'commons/utils/savedPartnerPageVenueId'
-import { SelectInput } from 'ui-kit/form/Select/SelectInput'
 import { FieldLayout } from 'ui-kit/form/shared/FieldLayout/FieldLayout'
+import { SelectInput } from 'ui-kit/form/shared/SelectInput/SelectInput'
 
 import { PartnerPage } from './components/PartnerPage'
 import styles from './PartnerPages.module.scss'

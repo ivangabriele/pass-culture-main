@@ -8,8 +8,8 @@ import fullRefreshIcon from 'icons/full-refresh.svg'
 import { Button } from 'ui-kit/Button/Button'
 import { ButtonVariant } from 'ui-kit/Button/types'
 import { PeriodSelector } from 'ui-kit/form/PeriodSelector/PeriodSelector'
-import { SelectInput } from 'ui-kit/form/Select/SelectInput'
 import { FieldLayout } from 'ui-kit/form/shared/FieldLayout/FieldLayout'
+import { SelectInput } from 'ui-kit/form/shared/SelectInput/SelectInput'
 
 import styles from './InvoicesFilters.module.scss'
 import { FiltersType } from './types'
@@ -29,7 +29,7 @@ export const InvoicesFilters = ({
   selectableOptions,
   setFilters,
   onReset,
-  onSearch
+  onSearch,
 }: InvoicesFiltersProps): JSX.Element => {
   const [searchParams] = useSearchParams()
 

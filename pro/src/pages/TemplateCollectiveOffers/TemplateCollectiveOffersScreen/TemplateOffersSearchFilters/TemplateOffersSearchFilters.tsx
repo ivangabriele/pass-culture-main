@@ -11,8 +11,8 @@ import { SelectOption } from 'commons/custom_types/form'
 import { OffersTableSearch } from 'components/OffersTable/OffersTableSearch/OffersTableSearch'
 import styles from 'components/OffersTable/OffersTableSearch/OffersTableSearch.module.scss'
 import { PeriodSelector } from 'ui-kit/form/PeriodSelector/PeriodSelector'
-import { SelectInput } from 'ui-kit/form/Select/SelectInput'
 import { FieldLayout } from 'ui-kit/form/shared/FieldLayout/FieldLayout'
+import { SelectInput } from 'ui-kit/form/shared/SelectInput/SelectInput'
 
 interface TemplateOffersSearchFiltersProps {
   hasFilters: boolean

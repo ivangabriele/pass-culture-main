@@ -22,8 +22,8 @@ import { MultiDownloadButtonsModal } from 'components/MultiDownloadButtonsModal/
 import fullRefreshIcon from 'icons/full-refresh.svg'
 import { Button } from 'ui-kit/Button/Button'
 import { ButtonVariant } from 'ui-kit/Button/types'
-import { SelectInput } from 'ui-kit/form/Select/SelectInput'
 import { FieldLayout } from 'ui-kit/form/shared/FieldLayout/FieldLayout'
+import { SelectInput } from 'ui-kit/form/shared/SelectInput/SelectInput'
 
 import { FilterByBookingStatusPeriod } from './FilterByBookingStatusPeriod/FilterByBookingStatusPeriod'
 import { FilterByEventDate } from './FilterByEventDate'

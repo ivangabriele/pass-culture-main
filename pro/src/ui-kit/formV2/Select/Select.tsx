@@ -2,8 +2,8 @@ import classNames from 'classnames'
 import { ForwardedRef, forwardRef, useId } from 'react'
 
 import { SelectOption } from 'commons/custom_types/form'
-import { SelectInput } from 'ui-kit/form/Select/SelectInput'
 import { FieldError } from 'ui-kit/form/shared/FieldError/FieldError'
+import { SelectInput } from 'ui-kit/form/shared/SelectInput/SelectInput'
 
 import styles from './Select.module.scss'
 

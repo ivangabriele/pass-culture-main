@@ -1,7 +1,7 @@
 import { ALL_STRUCTURES_OPTION } from 'commons/core/Bookings/constants'
 import { PreFiltersParams } from 'commons/core/Bookings/types'
-import { SelectInput } from 'ui-kit/form/Select/SelectInput'
 import { FieldLayout } from 'ui-kit/form/shared/FieldLayout/FieldLayout'
+import { SelectInput } from 'ui-kit/form/shared/SelectInput/SelectInput'
 
 import styles from './PreFilters.module.scss'
 
