@@ -1,5 +1,5 @@
 import { useField, useFormikContext } from 'formik'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { Checkbox } from 'design-system/Checkbox/Checkbox'
 import { TextInput, TextInputProps } from 'ui-kit/form/TextInput/TextInput'

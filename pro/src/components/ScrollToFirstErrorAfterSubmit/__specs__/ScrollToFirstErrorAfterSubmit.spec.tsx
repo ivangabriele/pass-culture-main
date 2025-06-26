@@ -1,12 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
-import { Formik, Form } from 'formik'
-import * as yup from 'yup'
 
 import { Button } from 'ui-kit/Button/Button'
 import { TextInput } from 'ui-kit/form/TextInput/TextInput'
 
-import { ScrollToFirstErrorAfterSubmit } from '../ScrollToFirstErrorAfterSubmit'
+import { ScrollToFirstHookFormErrorAfterSubmit } from '../ScrollToFirstErrorAfterSubmit'
 
 const scrollIntoViewMock = vi.fn()
 
@@ -16,22 +14,12 @@ vi.mock('commons/utils/windowMatchMedia', () => ({
 
 const TestComponent = () => {
   return (
-    <Formik
-      initialValues={{
-        test: '',
-      }}
-      validationSchema={yup.object().shape({
-        test: yup.string().required('Veuillez remplir le champ'),
-      })}
-      onSubmit={vi.fn()}
-    >
-      <Form>
-        <TextInput name="test" label="test" />
-        <Button type="submit">Enregistrer</Button>
+    <form>
+      <TextInput name="test" label="test" />
+      <Button type="submit">Enregistrer</Button>
 
-        <ScrollToFirstErrorAfterSubmit />
-      </Form>
-    </Formik>
+      <ScrollToFirstHookFormErrorAfterSubmit />
+    </form>
   )
 }
 
@@ -44,6 +32,7 @@ describe('ScrollToFirstErrorAfterSubmit', () => {
     Element.prototype.scrollIntoView = scrollIntoViewMock
 
     renderScrollToFirstErrorAfterSubmit()
+
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
     await waitFor(() => {
       expect(screen.getByText('Veuillez remplir le champ')).toBeInTheDocument()

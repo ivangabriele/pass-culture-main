@@ -1,12 +1,16 @@
 import cn from 'classnames'
+import { CountryCode } from 'libphonenumber-js'
 import { ChangeEvent, FocusEvent } from 'react'
 
 import fullRightIcon from 'icons/full-right.svg'
 import { SvgIcon } from 'ui-kit/SvgIcon/SvgIcon'
 
-import { PhoneCodeSelectOption } from '../constants'
-
 import styles from './CountryCodeSelect.module.scss'
+
+type PhoneCodeSelectOption = {
+  label: string
+  value: CountryCode
+}
 
 interface CountryCodeSelectProps {
   disabled: boolean
