@@ -1,4 +1,5 @@
 import pcapi.core.artist.factories as artist_factories
+import pcapi.core.offers.factories as offers_factories
 from pcapi.core.testing import assert_num_queries
 
 
@@ -21,7 +22,8 @@ class GetArtistsTest:
         artist = artist_factories.ArtistFactory(description=None, image=None)
 
         artist_id = artist.id
-        nb_queries = 1
+        nb_queries = 1  # artist
+        nb_queries += 1  # product mediation
         with assert_num_queries(nb_queries):
             response = client.get(f"/native/v1/artists/{artist_id}")
 
@@ -39,3 +41,17 @@ class GetArtistsTest:
         with assert_num_queries(nb_queries):
             response = client.get(f"/native/v1/artists/{artist_id}")
             assert response.status_code == 404
+
+    def test_get_image_from_product(self, client):
+        artist_id = artist_factories.ArtistFactory(image=None).id
+        print(artist_id)
+        product_mediation = offers_factories.ProductMediationFactory()
+        artist_factories.ArtistProductLinkFactory(artist_id=artist_id, product_id=product_mediation.product.id)
+
+        nb_queries = 1  # artist
+        nb_queries += 1  # product mediation
+        with assert_num_queries(nb_queries):
+            response = client.get(f"/native/v1/artists/{artist_id}")
+            assert response.status_code == 200
+
+        assert response.json["image"] == product_mediation.url
