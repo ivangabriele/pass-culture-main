@@ -11,17 +11,18 @@ from pcapi.models import db
 def get_artist_image_url(artist: Artist) -> str:
     image_url = artist.image
     if not image_url:
-        most_popular_product_mediation: ProductMediation = db.session.execute(
-            sa.select(ProductMediation)
+        most_popular_product_mediation: ProductMediation = (
+            db.session.query(ProductMediation)
             .join(Product)
-            .where(
+            .filter(
                 ProductMediation.productId.in_(
-                    sa.select(ArtistProductLink.product_id).where(ArtistProductLink.artist_id == artist.id)
+                    sa.select(ArtistProductLink.product_id).filter(ArtistProductLink.artist_id == artist.id)
                 )
             )
-            .where(ProductMediation.imageType.in_([ImageType.POSTER, ImageType.RECTO]))
+            .filter(ProductMediation.imageType.in_([ImageType.POSTER, ImageType.RECTO]))
             .order_by(Product.last_30_days_booking.desc())
-        ).first()
+            .first()
+        )
 
         if most_popular_product_mediation:
             image_url = most_popular_product_mediation.url

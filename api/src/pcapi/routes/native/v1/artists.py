@@ -1,6 +1,5 @@
 import logging
 
-import sqlalchemy as sa
 from flask import abort
 
 from pcapi.core.artist.api import get_artist_image_url
