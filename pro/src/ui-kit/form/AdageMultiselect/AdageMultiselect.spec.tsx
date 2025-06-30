@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 
-import { AdageMultiselect } from '../AdageMultiselect'
+import { AdageMultiselect } from './AdageMultiselect'
 
 const options = [
   { value: 1, label: 'Architecture' },
