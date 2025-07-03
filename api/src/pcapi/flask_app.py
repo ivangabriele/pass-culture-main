@@ -221,6 +221,7 @@ finance_utils.install_template_filters(app)
 app.config.from_mapping(
     CELERY=dict(
         broker_url=settings.REDIS_URL,
+        result_backend=settings.REDIS_URL,
         task_acks_late=True,
         task_reject_on_worker_lost=True,
         task_serializer="json",
@@ -234,7 +235,6 @@ app.config.from_mapping(
             "tasks.offers.default.*": {"queue": "celery.internal_calls.default"},
             "tasks.offers.priority.*": {"queue": "celery.internal_calls.priority"},
         },
-        task_ignore_result=True,
     ),
 )
 

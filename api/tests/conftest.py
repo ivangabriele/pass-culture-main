@@ -128,6 +128,7 @@ def build_main_app():
     app.config.from_mapping(
         CELERY=dict(
             broker_url=pcapi_settings.REDIS_URL,
+            result_backend=pcapi_settings.REDIS_URL,
             task_acks_late=True,
             task_reject_on_worker_lost=True,
             task_serializer="json",
@@ -141,7 +142,6 @@ def build_main_app():
                 "tasks.offers.default.*": {"queue": "celery.internal_calls.default"},
                 "tasks.offers.priority.*": {"queue": "celery.internal_calls.priority"},
             },
-            task_ignore_result=True,
         ),
     )
 

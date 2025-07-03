@@ -155,9 +155,6 @@ def _get_existing_offers(
     model=offers_schemas.CreateOrUpdateEANOffersRequest,
 )
 def create_or_update_ean_offers_celery(payload: offers_schemas.CreateOrUpdateEANOffersRequest) -> None:
-    import time
-
-    time.sleep(60)
     create_or_update_ean_offers(
         serialized_products_stocks=payload.serialized_products_stocks,
         venue_id=payload.venue_id,
@@ -193,6 +190,10 @@ def create_or_update_ean_offers(
     address_id: int | None = None,
     address_label: str | None = None,
 ) -> None:
+    print(provider_id)
+    test = db.session.query(providers_models.Provider).all()
+    print(test)
+    raise ValueError()
     provider = db.session.query(providers_models.Provider).filter_by(id=provider_id).one()
     venue = db.session.query(offerers_models.Venue).filter_by(id=venue_id).one()
 
