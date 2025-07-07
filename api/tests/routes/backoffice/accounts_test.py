@@ -2042,7 +2042,7 @@ class ReviewPublicAccountTest(PostEndpointHelper):
 
         response = self.post_to_endpoint(authenticated_client, user_id=user.id, form=base_form)
         assert response.status_code == 303
-        expected_url = url_for("backoffice_web.public_accounts.get_public_account", user_id=user.id, _external=True)
+        expected_url = url_for("backoffice_web.public_accounts.get_public_account", user_id=user.id)
         assert response.location == expected_url
 
         user = db.session.query(users_models.User).filter_by(id=user.id).one()
