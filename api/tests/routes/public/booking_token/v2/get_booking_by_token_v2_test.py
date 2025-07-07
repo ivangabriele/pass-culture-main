@@ -51,7 +51,6 @@ class Returns200Test:
         booking_token = booking.token
         with testing.assert_num_queries(self.num_queries):
             response = client.get(f"/v2/bookings/token/{booking_token}")
-            breakpoint()
             assert response.status_code == 200
 
         assert response.headers["Content-type"] == "application/json"
