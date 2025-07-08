@@ -48,26 +48,32 @@ class GetClassroomPlaylistTest(SharedPlaylistsErrorTests, AuthError):
 
         offers = educational_factories.CollectiveOfferTemplateFactory.create_batch(3)
         for offer in offers[:-1]:
-            educational_models.CollectivePlaylist(
-                type=educational_models.PlaylistType.CLASSROOM,
-                distanceInKm=expected_distance_prior_rounding,
-                institution=institution,
-                collective_offer_template=offer,
+            db.session.add(
+                educational_models.CollectivePlaylist(
+                    type=educational_models.PlaylistType.CLASSROOM,
+                    distanceInKm=expected_distance_prior_rounding,
+                    institution=institution,
+                    collective_offer_template=offer,
+                ),
             )
         # This item is to make sure that we issue an extended search if we have less than
         # 10 offers in the default search radius
-        educational_models.CollectivePlaylist(
-            type=educational_models.PlaylistType.CLASSROOM,
-            distanceInKm=150,
-            institution=institution,
-            collective_offer_template=offers[-1],
+        db.session.add(
+            educational_models.CollectivePlaylist(
+                type=educational_models.PlaylistType.CLASSROOM,
+                distanceInKm=150,
+                institution=institution,
+                collective_offer_template=offers[-1],
+            ),
         )
         # this should not appear in the playlist because it is for a different institution
-        educational_models.CollectivePlaylist(
-            type=educational_models.PlaylistType.CLASSROOM,
-            distanceInKm=expected_distance_prior_rounding,
-            institution=institution2,
-            collective_offer_template=offers[0],
+        db.session.add(
+            educational_models.CollectivePlaylist(
+                type=educational_models.PlaylistType.CLASSROOM,
+                distanceInKm=expected_distance_prior_rounding,
+                institution=institution2,
+                collective_offer_template=offers[0],
+            ),
         )
 
         iframe_client = _get_iframe_client(client, uai=institution.institutionId)
