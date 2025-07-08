@@ -489,7 +489,11 @@ class TestClient:
             )
         else:
             result = self.client.post(
-                route, json=json, headers={**self.auth_header, **headers}, follow_redirects=follow_redirects
+                route,
+                json=json,
+                content_type="application/json",
+                headers={**self.auth_header, **headers},
+                follow_redirects=follow_redirects,
             )
 
         self._print_spec("POST", route, json, result)
@@ -504,6 +508,7 @@ class TestClient:
         follow_redirects: bool = False,
     ):
         headers = headers or {}
+        json = json or {}
 
         if form:
             result = self.client.patch(
@@ -516,6 +521,7 @@ class TestClient:
             result = self.client.patch(
                 route,
                 json=json,
+                content_type="application/json",
                 headers={**self.auth_header, **headers},
                 follow_redirects=follow_redirects,
             )
@@ -532,7 +538,11 @@ class TestClient:
     ):
         headers = headers or {}
         result = self.client.put(
-            route, json=json, headers={**self.auth_header, **headers}, follow_redirects=follow_redirects
+            route,
+            json=json,
+            content_type="application/json",
+            headers={**self.auth_header, **headers},
+            follow_redirects=follow_redirects,
         )
         self._print_spec("PUT", route, json, result)
         return result
