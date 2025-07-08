@@ -121,7 +121,6 @@ class LocalProvider(Iterator):
         db.session.add(pc_object)
         errors = entity_validator.validate(pc_object)
         if errors and len(errors.errors) > 0:
-            db.session.delete(pc_object)
             self.log_provider_event(providers_models.LocalProviderEventType.SyncError, "ApiErrors")
             self.erroredObjects += 1
             raise errors

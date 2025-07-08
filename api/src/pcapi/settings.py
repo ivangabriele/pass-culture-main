@@ -76,7 +76,7 @@ DATABASE_IDLE_IN_TRANSACTION_SESSION_TIMEOUT = int(os.environ.get("DATABASE_IDLE
 # Managed databases have specific postgresql users and roles for pcapi, cron, backoffice or console.
 # Pull requests and local envs only have one user.
 DATABASE_HAS_SPECIFIC_ROLES = bool(int(os.environ.get("DATABASE_HAS_SPECIFIC_ROLES", "1")))
-SQLALCHEMY_ECHO = bool(int(os.environ.get("SQLALCHEMY_ECHO", "0")))
+SQLALCHEMY_ECHO = bool(int(os.environ.get("SQLALCHEMY_ECHO", "1")))
 
 
 # FLASK
