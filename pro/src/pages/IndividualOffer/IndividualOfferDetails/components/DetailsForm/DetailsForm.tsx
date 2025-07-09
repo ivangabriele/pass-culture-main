@@ -6,6 +6,7 @@ import { useIndividualOfferContext } from 'commons/context/IndividualOfferContex
 import { Events } from 'commons/core/FirebaseEvents/constants'
 import { CATEGORY_STATUS } from 'commons/core/Offers/constants'
 import { IndividualOfferImage } from 'commons/core/Offers/types'
+import { useActiveFeature } from 'commons/hooks/useActiveFeature'
 import { UploaderModeEnum } from 'commons/utils/imageUploadTypes'
 import { FormLayout } from 'components/FormLayout/FormLayout'
 import { MarkdownInfoBox } from 'components/MarkdownInfoBox/MarkdownInfoBox'
@@ -19,6 +20,7 @@ import { CalloutVariant } from 'ui-kit/Callout/types'
 import { Select } from 'ui-kit/form/Select/Select'
 import { TextArea } from 'ui-kit/form/TextArea/TextArea'
 import { TextInput } from 'ui-kit/form/TextInput/TextInput'
+import { TipsBanner } from 'ui-kit/TipsBanner/TipsBanner'
 
 import styles from './DetailsForm.module.scss'
 import { DetailsSubForm } from './DetailsSubForm/DetailsSubForm'
@@ -51,6 +53,7 @@ export const DetailsForm = ({
   onImageDelete,
 }: DetailsFormProps): JSX.Element => {
   const { logEvent } = useAnalytics()
+  const isVideoEnabled = useActiveFeature('WIP_ADD_VIDEO')
   const {
     register,
     watch,
@@ -170,6 +173,29 @@ export const DetailsForm = ({
         hideActionButtons={isProductBased}
         isDisabled={isProductBased}
       />
+      {isVideoEnabled && (
+        <FormLayout.Section title="Ajoutez une vidéo">
+          <FormLayout.Row
+            className={styles['row']}
+            sideComponent={
+              <TipsBanner>
+                "2 jeunes sur 3 aimeraient voir des vidéos sur les offres
+                culturelles du pass Culture."
+              </TipsBanner>
+            }
+          >
+            <TextInput
+              label="Lien URL Youtube"
+              type="text"
+              description="Format : https://www.youtube.com/watch?v=0R5PZxOgoz8"
+              disabled={readOnlyFields.includes('videoUrl')}
+              {...register('videoUrl')}
+              error={errors.videoUrl?.message}
+              required
+            />
+          </FormLayout.Row>
+        </FormLayout.Section>
+      )}
       {!showAddVenueBanner && (
         <Subcategories
           readOnlyFields={readOnlyFields}

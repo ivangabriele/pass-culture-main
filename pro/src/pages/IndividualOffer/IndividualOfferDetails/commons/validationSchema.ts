@@ -86,6 +86,7 @@ export const getValidationSchema = ({
               url ? url.match(offerFormUrlRegex) !== null : true,
           })
       : yup.string().nullable(),
+    videoUrl: yup.string().url().nullable(),
   })
 }
 

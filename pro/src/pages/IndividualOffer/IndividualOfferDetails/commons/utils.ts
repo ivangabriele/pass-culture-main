@@ -7,6 +7,8 @@ import {
   SubcategoryResponseModel,
   VenueListItemResponseModel,
   SubcategoryIdEnum,
+  PatchDraftOfferBodyModel,
+  PostDraftOfferBodyModel,
 } from 'apiClient/v1'
 import { showOptionsTree } from 'commons/core/Offers/categoriesSubTypes'
 import { isOfferSynchronized } from 'commons/core/Offers/utils/typology'
@@ -250,6 +252,7 @@ export function setDefaultInitialValuesFromOffer({
     productId:
       offer.productId?.toString() ?? DEFAULT_DETAILS_FORM_VALUES.productId,
     url: offer.url,
+    videoUrl: offer.videoUrl,
   }
 }
 
@@ -303,19 +306,9 @@ export const serializeExtraData = (formValues: DetailsFormValues) => {
   })
 }
 
-type PostPayload = {
-  description?: string | null
-  durationMinutes?: number
-  extraData?: Record<string, unknown>
-  name: string
-  subcategoryId: string
-  venueId: number
-  productId?: number
-}
-
 export function serializeDetailsPostData(
   formValues: DetailsFormValues
-): PostPayload {
+): PostDraftOfferBodyModel {
   return trimStringsInObject({
     name: formValues.name,
     subcategoryId: formValues.subcategoryId,
@@ -325,21 +318,13 @@ export function serializeDetailsPostData(
     extraData: serializeExtraData(formValues),
     productId: formValues.productId ? Number(formValues.productId) : undefined,
     url: formValues.url,
+    videoUrl: formValues.videoUrl,
   })
-}
-
-type PatchPayload = {
-  description?: string | null
-  durationMinutes?: number
-  extraData?: Record<string, unknown>
-  name: string
-  subcategoryId: string
-  url?: string | null
 }
 
 export function serializeDetailsPatchData(
   formValues: DetailsFormValues
-): PatchPayload {
+): PatchDraftOfferBodyModel {
   return {
     name: formValues.name,
     subcategoryId: formValues.subcategoryId,
@@ -347,5 +332,6 @@ export function serializeDetailsPatchData(
     durationMinutes: serializeDurationMinutes(formValues.durationMinutes ?? ''),
     extraData: serializeExtraData(formValues),
     url: formValues.url,
+    videoUrl: formValues.videoUrl,
   }
 }
