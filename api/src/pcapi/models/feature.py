@@ -116,6 +116,7 @@ class FeatureToggle(enum.Enum):
     # For features under construction, a temporary feature flag must be named with the `WIP_` prefix
     WIP_2025_AUTOLOGIN = "Activer l’autologin par lien lors de l’inscription au portail pro"
     WIP_2025_SIGN_UP = "Activer la nouvelle interface d’inscription au portail pro"
+    WIP_ADD_VIDEO = "Permettre aux pros d'avoir des vidéos sur leurs offres"
     WIP_ASYNCHRONOUS_CELERY_MAILS = (
         "Activer le backend de tâches asynchrones Celery pour les tâches liées à l'envoi de mails"
     )
@@ -223,6 +224,7 @@ FEATURES_DISABLED_BY_DEFAULT: tuple[FeatureToggle, ...] = (
     FeatureToggle.SYNCHRONIZE_TITELIVE_API_MUSIC_PRODUCTS,
     FeatureToggle.WIP_2025_AUTOLOGIN,
     FeatureToggle.WIP_2025_SIGN_UP,
+    FeatureToggle.WIP_ADD_VIDEO,
     FeatureToggle.WIP_ASYNCHRONOUS_CELERY_MAILS,
     FeatureToggle.WIP_DISABLE_CANCEL_BOOKING_NOTIFICATION,
     FeatureToggle.WIP_DISABLE_NOTIFY_USERS_BOOKINGS_NOT_RETRIEVED,
