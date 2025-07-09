@@ -3,9 +3,7 @@ name = "pcapi"
 version = "0.0.0"
 description = "The backend of the pass Culture"
 license = "MPL-2.0"
-authors = [
-  { name = "Equipe pass Culture", email = "<contact@passculture.app>" },
-]
+authors = [{ name = "Equipe pass Culture", email = "<contact@passculture.app>" }]
 requires-python = ">=3.11,<4.0"
 
 dependencies = [
@@ -15,15 +13,15 @@ dependencies = [
   "babel==2.17.0",
   "bcrypt==4.3.0",
   "beautifulsoup4==4.13.4",
-  "boto3==1.35.99",                    # For compatibility with Outscale, do not upgrade to 1.36 until they solved the issue: https://status.outscale.com/incidents/hcq9vmjkl0k9
+  "boto3==1.35.99",               # For compatibility with Outscale, do not upgrade to 1.36 until they solved the issue: https://status.outscale.com/incidents/hcq9vmjkl0k9
   "boussole==2.1.3",
   "brevo-python==1.1.2",
   "celery[redis]==5.5.3",
   "click-option-group==0.5.7",
   "click==8.2.1",
   "clickhouse-sqlalchemy==0.3.2",
-  "cryptography (>=44.0.3,<45)",       # pyopenssl (24.3.0) depends on cryptography (>=41.0.5,<45)
-  "ecdsa==0.19.1",                     # <0.20.0
+  "cryptography (>=44.0.3,<45)",  # pyopenssl (24.3.0) depends on cryptography (>=41.0.5,<45)
+  "ecdsa==0.19.1",                # <0.20.0
   "email-validator==2.2.0",
   "factory-boy==3.3.3",
   "flask-cors (==6.0.1)",
@@ -68,7 +66,7 @@ dependencies = [
   "pysaml2>=7.5.0",
   "python-dateutil==2.9.0.post0",
   "python-dotenv==1.1.0",
-  "pyshp (>=2.3.1,<3.0.0)",        # Used for iris importation
+  "pyshp (>=2.3.1,<3.0.0)",                                                                          # Used for iris importation
   "pytz==2025.2",
   "rapidfuzz==3.13.0",
   "regex (>=2024.11.6,<2025.0.0)",
@@ -77,7 +75,7 @@ dependencies = [
   "schwifty==2025.6.0",
   "semver==3.0.4",
   "sentry-sdk[flask]==2.30.0",
-  "shapely (>=2.1.1,<3.0.0)",      # Used for iris importation
+  "shapely (>=2.1.1,<3.0.0)",                                                                        # Used for iris importation
   "slack-sdk==3.35.0",
   "spectree==1.2.1",
   "sqlalchemy[mypy]==2.0.41",
@@ -133,7 +131,7 @@ warn_unused_ignores = true
 show_error_codes = true
 warn_redundant_casts = true
 local_partial_types = true
-plugins = "sqlalchemy.ext.mypy.plugin, pydantic.mypy"
+plugins = "pydantic.mypy"
 exclude = """
 (?x)(
     tests/.*
@@ -237,14 +235,7 @@ ignore = [
 case-sensitive = true
 force-single-line = true
 lines-after-imports = 2
-section-order = [
-  "future",
-  "standard-library",
-  "third-party",
-  "first-party",
-  "tests",
-  "local-folder",
-]
+section-order = ["future", "standard-library", "third-party", "first-party", "tests", "local-folder"]
 
 [tool.ruff.lint.isort.sections]
 tests = ["tests"]
