@@ -470,13 +470,14 @@ class TestClient:
         files: dict = None,
         headers: dict = None,
         follow_redirects: bool = False,
+        content_type: str | None = "application/json",
     ):
         headers = headers or {}
         if raw_json:
             result = self.client.post(
                 route,
                 data=raw_json,
-                content_type="application/json",
+                content_type=content_type,
                 headers={**self.auth_header, **headers},
                 follow_redirects=follow_redirects,
             )
@@ -491,7 +492,7 @@ class TestClient:
             result = self.client.post(
                 route,
                 json=json,
-                content_type="application/json",
+                content_type=content_type,
                 headers={**self.auth_header, **headers},
                 follow_redirects=follow_redirects,
             )
