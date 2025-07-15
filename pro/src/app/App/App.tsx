@@ -20,10 +20,10 @@ import {
 import { useOfferer } from 'commons/hooks/swr/useOfferer'
 import { useHasAccessToDidacticOnboarding } from 'commons/hooks/useHasAccessToDidacticOnboarding'
 import { useNotification } from 'commons/hooks/useNotification'
-import { updateSelectedOffererId } from 'commons/store/offerer/reducer'
+import { updateCurrentOfferer } from 'commons/store/offerer/reducer'
 import {
   selectCurrentOffererId,
-  selectedOffererIsOnboarded,
+  selectCurrentOffererIsOnboarded,
 } from 'commons/store/offerer/selectors'
 import { updateUser } from 'commons/store/user/reducer'
 import { selectCurrentUser } from 'commons/store/user/selectors'
@@ -45,7 +45,7 @@ export const App = (): JSX.Element | null => {
   const location = useLocation()
   const navigate = useNavigate()
   const currentUser = useSelector(selectCurrentUser)
-  const isOffererOnboarded = useSelector(selectedOffererIsOnboarded)
+  const isOffererOnboarded = useSelector(selectCurrentOffererIsOnboarded)
   const dispatch = useDispatch()
   const notify = useNotification()
   const isDidacticOnboardingEnabled = useHasAccessToDidacticOnboarding()
@@ -60,7 +60,15 @@ export const App = (): JSX.Element | null => {
   const [searchParams] = useSearchParams()
   useEffect(() => {
     if (searchParams.get('from-bo')) {
-      dispatch(updateSelectedOffererId(Number(searchParams.get('structure'))))
+      const structureId = Number(searchParams.get('structure'))
+
+      api.getOfferer(structureId).then(
+        (offererObj) => {
+          dispatch(updateCurrentOfferer(offererObj))
+        },
+        () => notify.error(GET_DATA_ERROR_MESSAGE)
+      )
+
       searchParams.delete('from-bo')
       searchParams.delete('structure')
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -95,7 +103,7 @@ export const App = (): JSX.Element | null => {
         localStorage.removeItem(SAVED_OFFERER_ID_KEY)
       }
       dispatch(updateUser(null))
-      dispatch(updateSelectedOffererId(null))
+      dispatch(updateCurrentOfferer(null))
     }
   }, [location, dispatch])
 
