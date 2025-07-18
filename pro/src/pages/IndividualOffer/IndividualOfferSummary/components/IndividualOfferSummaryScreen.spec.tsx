@@ -27,7 +27,7 @@ import {
 import { renderWithProviders } from 'commons/utils/renderWithProviders'
 import { OFFER_WIZARD_STEP_IDS } from 'components/IndividualOfferNavigation/constants'
 
-import { SummaryScreen } from './SummaryScreen'
+import { IndividualOfferSummaryScreen } from './IndividualOfferSummaryScreen'
 
 vi.mock('apiClient/api', () => ({
   api: {
@@ -77,7 +77,7 @@ const renderSummaryScreen = ({
     })
   const element = (
     <IndividualOfferContext.Provider value={contextValue}>
-      <SummaryScreen />
+      <IndividualOfferSummaryScreen />
     </IndividualOfferContext.Provider>
   )
   const component = (
