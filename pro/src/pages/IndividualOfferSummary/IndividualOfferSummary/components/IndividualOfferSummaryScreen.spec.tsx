@@ -41,11 +41,11 @@ import {
 import { OFFER_WIZARD_STEP_IDS } from 'components/IndividualOfferNavigation/constants'
 import { Notification } from 'components/Notification/Notification'
 
-import { SummaryScreen } from '../SummaryScreen'
+import { IndividualOfferSummaryScreen } from './IndividualOfferSummaryScreen'
 
 const mockLogEvent = vi.fn()
 
-const renderSummary = (
+const renderIndividualOfferSummaryScreen = (
   customContext: Partial<IndividualOfferContextValues> = {},
   url: string = getIndividualOfferPath({
     step: OFFER_WIZARD_STEP_IDS.SUMMARY,
@@ -64,14 +64,14 @@ const renderSummary = (
               step: OFFER_WIZARD_STEP_IDS.SUMMARY,
               mode: OFFER_WIZARD_MODE.READ_ONLY,
             })}
-            element={<SummaryScreen />}
+            element={<IndividualOfferSummaryScreen />}
           />
           <Route
             path={getIndividualOfferPath({
               step: OFFER_WIZARD_STEP_IDS.SUMMARY,
               mode: OFFER_WIZARD_MODE.CREATION,
             })}
-            element={<SummaryScreen />}
+            element={<IndividualOfferSummaryScreen />}
           />
           <Route
             path={getIndividualOfferPath({
@@ -98,7 +98,7 @@ const subCategories = [
   subcategoryFactory({ categoryId: 'A' }),
 ]
 
-describe('Summary', () => {
+describe('IndividualOfferSummaryScreen', () => {
   let customContext: Partial<IndividualOfferContextValues>
   let musicTypes: GetMusicTypesResponse
   beforeEach(() => {
@@ -178,7 +178,7 @@ describe('Summary', () => {
   }
 
   it('should render component with informations on edition', async () => {
-    renderSummary(customContext)
+    renderIndividualOfferSummaryScreen(customContext)
 
     await expectOfferFields()
     expect(screen.getByText('Retour à la liste des offres')).toBeInTheDocument()
@@ -186,14 +186,14 @@ describe('Summary', () => {
   })
 
   it('should render public name if available', async () => {
-    renderSummary(customContext)
+    renderIndividualOfferSummaryScreen(customContext)
 
     await expectOfferFields()
     expect(screen.getByText('ma venue (nom public)')).toBeInTheDocument()
   })
 
   it('should render name if no public name available', async () => {
-    renderSummary({
+    renderIndividualOfferSummaryScreen({
       ...customContext,
       offer: getIndividualOfferFactory({
         ...customContext.offer,
@@ -219,7 +219,7 @@ describe('Summary', () => {
     })
 
     it('should render component with informations', async () => {
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         customContext,
         generatePath(
           getIndividualOfferPath({
@@ -242,7 +242,7 @@ describe('Summary', () => {
       )
       customContext.offer = getIndividualOfferFactory({ isEvent: true })
 
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         customContext,
         generatePath(
           getIndividualOfferPath({
@@ -259,7 +259,7 @@ describe('Summary', () => {
     })
 
     it('should render component with right buttons', () => {
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         customContext,
         generatePath(
           getIndividualOfferPath({
@@ -282,7 +282,7 @@ describe('Summary', () => {
         defaultGetOffererResponseModel
       )
 
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         customContext,
         generatePath(
           getIndividualOfferPath({
@@ -303,7 +303,7 @@ describe('Summary', () => {
     })
 
     it('should disabled publish button link during submit', async () => {
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         customContext,
         generatePath(
           getIndividualOfferPath({
@@ -352,7 +352,7 @@ describe('Summary', () => {
       )
       customContext.offer = getIndividualOfferFactory()
 
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         customContext,
         generatePath(
           getIndividualOfferPath({
@@ -412,7 +412,7 @@ describe('Summary', () => {
       )
       customContext.offer = getIndividualOfferFactory()
 
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         customContext,
         generatePath(
           getIndividualOfferPath({
@@ -469,7 +469,7 @@ describe('Summary', () => {
     })
 
     it('should display notification on api error', async () => {
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         customContext,
         generatePath(
           getIndividualOfferPath({
@@ -512,7 +512,7 @@ describe('Summary', () => {
         },
       }
 
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         context,
         generatePath(
           getIndividualOfferPath({
@@ -558,7 +558,7 @@ describe('Summary', () => {
         getIndividualOfferFactory({ isNonFreeOffer: true })
       )
 
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         context,
         generatePath(
           getIndividualOfferPath({
@@ -603,7 +603,7 @@ describe('Summary', () => {
         getIndividualOfferFactory({ isNonFreeOffer: false })
       )
 
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         context,
         generatePath(
           getIndividualOfferPath({
@@ -636,7 +636,7 @@ describe('Summary', () => {
         venueList: [venueListItemFactory()],
       }
 
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         context,
         generatePath(
           getIndividualOfferPath({
@@ -670,7 +670,7 @@ describe('Summary', () => {
         venueList: [venueListItemFactory()],
       }
 
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         context,
         generatePath(
           getIndividualOfferPath({
@@ -709,7 +709,7 @@ describe('Summary', () => {
         },
       })
 
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         customContext,
         generatePath(
           getIndividualOfferPath({
@@ -747,7 +747,7 @@ describe('Summary', () => {
         address: null,
       })
 
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         customContext,
         generatePath(
           getIndividualOfferPath({
@@ -780,13 +780,13 @@ describe('Summary', () => {
         }),
         { offerId: 'AA' }
       )
-      renderSummary(customContext, url)
+      renderIndividualOfferSummaryScreen(customContext, url)
 
       expect(screen.getByText('Vous y êtes presque !')).toBeInTheDocument()
     })
 
     it('should display a notification when saving as draft', async () => {
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         customContext,
         generatePath(
           getIndividualOfferPath({
@@ -805,7 +805,7 @@ describe('Summary', () => {
     })
 
     it('should not display pre publishing banner in edition mode', () => {
-      renderSummary(
+      renderIndividualOfferSummaryScreen(
         customContext,
         generatePath(
           getIndividualOfferPath({
