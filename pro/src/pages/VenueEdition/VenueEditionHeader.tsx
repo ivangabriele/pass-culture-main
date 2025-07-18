@@ -16,6 +16,7 @@ import { useActiveFeature } from 'commons/hooks/useActiveFeature'
 import { useNotification } from 'commons/hooks/useNotification'
 import { selectCurrentOfferer } from 'commons/store/offerer/selectors'
 import { WEBAPP_URL } from 'commons/utils/config'
+import { getVenuePagePathToNavigateTo } from 'commons/utils/getVenuePagePathToNavigateTo'
 import {
   UploadImageValues,
   UploaderModeEnum,
@@ -162,7 +163,11 @@ export const VenueEditionHeader = ({
           <ButtonLink
             variant={ButtonVariant.TERNARY}
             icon={fullParametersIcon}
-            to={`/structures/${venue.managingOfferer.id}/lieux/${venue.id}/parametres`}
+            to={getVenuePagePathToNavigateTo(
+              venue.managingOfferer.id,
+              venue.id,
+              '/parametres'
+            )}
           >
             Paramètres généraux
           </ButtonLink>
