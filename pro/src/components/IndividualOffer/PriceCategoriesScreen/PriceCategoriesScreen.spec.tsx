@@ -7,10 +7,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { api } from 'apiClient/api'
-import {
-  GetIndividualOfferWithAddressResponseModel,
-  GetOfferStockResponseModel,
-} from 'apiClient/v1'
+import { GetIndividualOfferWithAddressResponseModel } from 'apiClient/v1'
 import { IndividualOfferContextProvider } from 'commons/context/IndividualOfferContext/IndividualOfferContext'
 import { OFFER_WIZARD_MODE } from 'commons/core/Offers/constants'
 import { getIndividualOfferUrl } from 'commons/core/Offers/utils/getIndividualOfferUrl'
@@ -26,21 +23,12 @@ import { PRICE_CATEGORY_MAX_LENGTH } from './form/constants'
 import { PriceCategoriesScreen } from './PriceCategoriesScreen'
 
 const renderPriceCategoriesScreen = async (
-  apiOffer: GetIndividualOfferWithAddressResponseModel,
-  apiStocks: GetOfferStockResponseModel[] = [],
-  stocksCount?: number
+  apiOffer: GetIndividualOfferWithAddressResponseModel
 ) => {
   vi.spyOn(api, 'getOffer').mockResolvedValue(apiOffer)
   vi.spyOn(api, 'getCategories').mockResolvedValue({
     categories: [],
     subcategories: [],
-  })
-  vi.spyOn(api, 'getVenues').mockResolvedValue({ venues: [] })
-  vi.spyOn(api, 'listOfferersNames').mockResolvedValue({ offerersNames: [] })
-  vi.spyOn(api, 'getStocks').mockResolvedValue({
-    stocks: apiStocks,
-    stockCount: stocksCount ?? apiStocks.length,
-    hasStocks: true,
   })
   vi.spyOn(api, 'listOffers').mockResolvedValue([listOffersOfferFactory()])
 
@@ -70,7 +58,7 @@ describe('PriceCategoriesScreen', () => {
     apiOffer = getIndividualOfferFactory()
   })
 
-  it('shows validation errors on submit if required fields are empty', async () => {
+  it('should shows validation errors on submit if required fields are empty', async () => {
     await renderPriceCategoriesScreen(apiOffer)
 
     await userEvent.click(screen.getByText(/ajouter un tarif/i))
@@ -82,7 +70,7 @@ describe('PriceCategoriesScreen', () => {
     ).toBeInTheDocument()
   })
 
-  it('clears errors when fields are filled', async () => {
+  it('should clears errors when fields are filled', async () => {
     await renderPriceCategoriesScreen(apiOffer)
 
     await userEvent.click(screen.getByText(/ajouter un tarif/i))
@@ -106,7 +94,7 @@ describe('PriceCategoriesScreen', () => {
     })
   })
 
-  it('shows error when price is too high', async () => {
+  it('should shows error when price is too high', async () => {
     await renderPriceCategoriesScreen(apiOffer)
 
     await userEvent.click(screen.getByText(/ajouter un tarif/i))
@@ -122,11 +110,11 @@ describe('PriceCategoriesScreen', () => {
     })
   })
 
-  it('deletes a price category when clicking delete', async () => {
+  it('should deletes a price category when clicking delete', async () => {
     await renderPriceCategoriesScreen(apiOffer)
 
     await userEvent.click(screen.getByText(/ajouter un tarif/i))
-    expect(screen.getByTestId('priceCategories.1.label')).toBeInTheDocument()
+    expect(screen.getByTestId('priceCategories.0.label')).toBeInTheDocument()
 
     const deleteButtons = screen.getAllByTestId('delete-button')
 
@@ -139,7 +127,24 @@ describe('PriceCategoriesScreen', () => {
     })
   })
 
-  it('adds a new price category when clicking add', async () => {
+  it('should display default label when there is only one price after delete', async () => {
+    await renderPriceCategoriesScreen(apiOffer)
+
+    await userEvent.click(screen.getByText(/ajouter un tarif/i))
+    expect(screen.getByTestId('priceCategories.0.label')).toBeInTheDocument()
+
+    const deleteButtons = screen.getAllByTestId('delete-button')
+
+    await userEvent.click(deleteButtons[0])
+
+    const priceLabel = screen.queryByTestId('priceCategories.0.label')
+
+    await waitFor(() => {
+      expect(priceLabel).toHaveValue('mon label')
+    })
+  })
+
+  it('should adds a new price category when clicking add', async () => {
     await renderPriceCategoriesScreen(apiOffer)
 
     await userEvent.click(screen.getByText(/ajouter un tarif/i))
@@ -148,7 +153,7 @@ describe('PriceCategoriesScreen', () => {
     expect(screen.getAllByLabelText('Intitulé du tarif').length).toBe(3)
   })
 
-  it('toggles Duo checkbox', async () => {
+  it('should toggles Duo checkbox', async () => {
     await renderPriceCategoriesScreen(apiOffer)
 
     const checkbox = screen.getByRole('checkbox')
@@ -173,7 +178,7 @@ describe('PriceCategoriesScreen', () => {
     expect(priceLabel).toHaveValue('mon label')
   })
 
-  it('disables "Ajouter un tarif" button when reaching max number of categories', async () => {
+  it('should disables "Ajouter un tarif" button when reaching max number of categories', async () => {
     await renderPriceCategoriesScreen(apiOffer)
 
     for (let i = 0; i < PRICE_CATEGORY_MAX_LENGTH - 1; i++) {
@@ -183,7 +188,7 @@ describe('PriceCategoriesScreen', () => {
     expect(screen.getByText(/ajouter un tarif/i)).toBeDisabled()
   })
 
-  it('submits form when confirmation modal is accepted', async () => {
+  it('should submits form when confirmation modal is accepted', async () => {
     const spySubmit = vi
       .spyOn(api, 'postPriceCategories')
       .mockResolvedValue(apiOffer)
@@ -221,7 +226,7 @@ describe('PriceCategoriesScreen', () => {
     })
   })
 
-  it('shows confirmation dialog before deleting a saved price category with stocks', async () => {
+  it('should shows confirmation dialog before deleting a saved price category with stocks', async () => {
     const modifiedApiOffer = {
       ...apiOffer,
       hasStocks: true,
