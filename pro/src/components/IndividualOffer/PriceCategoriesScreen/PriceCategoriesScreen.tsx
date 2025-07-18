@@ -143,7 +143,7 @@ export const PriceCategoriesScreen = ({
     formState: { errors, isDirty, isSubmitting },
   } = hookForm
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, insert } = useFieldArray({
     control,
     name: 'priceCategories',
   })
@@ -176,7 +176,9 @@ export const PriceCategoriesScreen = ({
     // Show popin if necessary
     const showConfirmationModal =
       offer.hasStocks && arePriceCategoriesChanged(defaultValues, values)
+
     setIsConfirmationModalOpen(showConfirmationModal)
+
     if (!isConfirmationModalOpen && showConfirmationModal) {
       return
     }
@@ -233,12 +235,16 @@ export const PriceCategoriesScreen = ({
     priceCategories: PriceCategoryForm[]
   ) => {
     const priceCategoryId = priceCategories[index].id
+
+    console.log(priceCategories, priceCategories[index].id)
     const hasOnlyTwo = priceCategories.length === 2
 
     if (hasOnlyTwo) {
-      setValue(`priceCategories.0.label`, UNIQUE_PRICE, {
-        shouldValidate: true,
-      })
+      setTimeout(() => {
+        setValue(`priceCategories.0.label`, UNIQUE_PRICE, {
+          shouldValidate: true,
+        })
+      }, 10)
     }
 
     if (priceCategoryId) {
@@ -269,6 +275,9 @@ export const PriceCategoriesScreen = ({
               ],
             }
 
+            setValue(`priceCategories.0.label`, UNIQUE_PRICE, {
+              shouldValidate: true,
+            })
             await api.postPriceCategories(offer.id, requestBody)
           }
         }

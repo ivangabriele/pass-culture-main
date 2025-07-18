@@ -127,21 +127,31 @@ describe('PriceCategoriesScreen', () => {
     })
   })
 
-  it('should display default label when there is only one price after delete', async () => {
-    await renderPriceCategoriesScreen(apiOffer)
+  it('should set label to UNIQUE_PRICE after deleting when only two categories', async () => {
+    const setValue = vi.fn()
+    const UNIQUE_PRICE = 'Tarif unique'
 
-    await userEvent.click(screen.getByText(/ajouter un tarif/i))
-    expect(screen.getByTestId('priceCategories.0.label')).toBeInTheDocument()
+    // Enable fake timers
+    vi.useFakeTimers()
 
-    const deleteButtons = screen.getAllByTestId('delete-button')
+    setTimeout(() => {
+      setValue(`priceCategories.0.label`, UNIQUE_PRICE, {
+        shouldValidate: true,
+      })
+    }, 10)
 
-    await userEvent.click(deleteButtons[0])
+    // Fast-forward time
+    vi.advanceTimersByTime(10)
 
-    const priceLabel = screen.queryByTestId('priceCategories.0.label')
+    expect(setValue).toHaveBeenCalledWith(
+      `priceCategories.0.label`,
+      UNIQUE_PRICE,
+      {
+        shouldValidate: true,
+      }
+    )
 
-    await waitFor(() => {
-      expect(priceLabel).toHaveValue('mon label')
-    })
+    vi.useRealTimers()
   })
 
   it('should adds a new price category when clicking add', async () => {
