@@ -1,0 +1,44 @@
+2025-11-25 00:21:10,314 - [INFO] ======================================================================
+2025-11-25 00:21:10,314 - [INFO] TimescaleDB Standalone Seed Script
+2025-11-25 00:21:10,314 - [INFO] ======================================================================
+2025-11-25 00:21:10,314 - [INFO] Connecting to TimescaleDB...
+2025-11-25 00:21:10,321 - [INFO] ======================================================================
+2025-11-25 00:21:10,321 - [INFO] Generating Base Entities
+2025-11-25 00:21:10,322 - [INFO] ======================================================================
+2025-11-25 00:21:10,322 - [INFO] Generating 2,000,000 users...
+2025-11-25 00:21:51,363 - [INFO]   ✓ Created 20,000 users
+2025-11-25 00:21:51,364 - [INFO] Generating 2,000,000 deposits...
+2025-11-25 00:21:51,624 - [INFO]   ✓ Created 200 deposits
+2025-11-25 00:21:51,625 - [INFO] Generating 100,000 offerers...
+2025-11-25 00:21:52,885 - [INFO]   ✓ Created 1,000 offerers
+2025-11-25 00:21:52,885 - [INFO] Generating 100,000 addresses...
+2025-11-25 00:21:54,221 - [INFO]   ✓ Created 1,000 addresses
+2025-11-25 00:21:54,222 - [INFO] Generating 100,000 offerer_addresses...
+2025-11-25 00:21:54,222 - [ERROR] Error generating base entities: list index out of range
+Traceback (most recent call last):
+  File "/home/ivan/Workspace/pass-culture/pass-culture-main/api/../scripts/seed_timescaledb_standalone.py", line 116, in generate_base_entities
+    self._generate_offerer_addresses(num_offerers)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/home/ivan/Workspace/pass-culture/pass-culture-main/api/../scripts/seed_timescaledb_standalone.py", line 306, in _generate_offerer_addresses
+    address_id = self.base_data["address_ids"][i]
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+2025-11-25 00:21:54,225 - [ERROR] ✗ Fatal error: list index out of range
+Traceback (most recent call last):
+  File "/home/ivan/Workspace/pass-culture/pass-culture-main/api/../scripts/seed_timescaledb_standalone.py", line 662, in main
+    generator.generate_base_entities(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        num_users=args.num_users,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        num_stocks=args.num_stocks,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/ivan/Workspace/pass-culture/pass-culture-main/api/../scripts/seed_timescaledb_standalone.py", line 116, in generate_base_entities
+    self._generate_offerer_addresses(num_offerers)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/home/ivan/Workspace/pass-culture/pass-culture-main/api/../scripts/seed_timescaledb_standalone.py", line 306, in _generate_offerer_addresses
+    address_id = self.base_data["address_ids"][i]
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range

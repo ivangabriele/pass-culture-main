@@ -1,0 +1,5 @@
+2025-11-24 19:03:38,123 - [INFO] ======================================================================
+2025-11-24 19:03:38,123 - [INFO] Converting booking table to TimescaleDB hypertable
+2025-11-24 19:03:38,123 - [INFO] ======================================================================
+2025-11-24 19:03:38,131 - [INFO] Checking if booking is already a hypertable...
+2025-11-24 19:03:38,138 - [INFO] ✓ booking is already a hypertable!

@@ -1,0 +1,32 @@
+2025-11-24 19:06:04,753 - [INFO] ======================================================================
+2025-11-24 19:06:04,753 - [INFO] Applying TimescaleDB Compression (Strategy 2)
+2025-11-24 19:06:04,753 - [INFO] ======================================================================
+2025-11-24 19:06:04,763 - [INFO] Verifying booking is a hypertable...
+2025-11-24 19:06:04,772 - [INFO] ✓ Verified
+2025-11-24 19:06:04,772 - [INFO] Configuring compression policy (compress chunks older than 7 days)...
+2025-11-24 19:06:04,777 - [INFO] ✓ Compression settings configured
+2025-11-24 19:06:04,777 - [INFO]   - Orderby: dateCreated DESC (optimize time-range queries)
+2025-11-24 19:06:04,777 - [INFO]   - Segmentby: offererId, venueId, status (common filter columns)
+2025-11-24 19:06:04,777 - [INFO] Adding compression policy (auto-compress after 7 days)...
+2025-11-24 19:06:04,780 - [INFO] ✓ Compression policy added
+2025-11-24 19:06:04,780 - [INFO] Manually compressing all existing chunks...
+2025-11-24 19:06:38,062 - [INFO] ✓ Compressed 157 chunks
+2025-11-24 19:06:38,062 - [INFO] Checking compression status...
+2025-11-24 19:06:38,067 - [ERROR] Compression failed: column "before_compression_total_bytes" does not exist
+LINE 4:                     pg_size_pretty(before_compression_total_...
+                                           ^
+Traceback (most recent call last):
+  File "/home/ivan/Workspace/pass-culture/pass-culture-main/api/../scripts/apply_compression.py", line 76, in apply_compression
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT
+        ^^^^^^
+    ...<12 lines>...
+        LIMIT 10;
+        ^^^^^^^^^
+    """)
+    ^^^^
+psycopg2.errors.UndefinedColumn: column "before_compression_total_bytes" does not exist
+LINE 4:                     pg_size_pretty(before_compression_total_...
+                                           ^
+

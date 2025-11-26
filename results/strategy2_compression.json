@@ -1,0 +1,308 @@
+{
+  "metadata": {
+    "database": "timescaledb",
+    "host": "localhost",
+    "port": 5435,
+    "runs": 3,
+    "timestamp": "2025-11-24T19:07:36.850318"
+  },
+  "results": [
+    {
+      "query_name": "count_query_30d",
+      "execution_time_ms": 5.03,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 1,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "count_query_90d",
+      "execution_time_ms": 4.57,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 1,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "count_query_365d",
+      "execution_time_ms": 13.07,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 1,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "list_query_30d_page1",
+      "execution_time_ms": 5.46,
+      "memory_usage_mb": 0.19,
+      "result_count": 87,
+      "error": null,
+      "run": 1,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "list_query_90d_page1",
+      "execution_time_ms": 6.41,
+      "memory_usage_mb": 0.0,
+      "result_count": 243,
+      "error": null,
+      "run": 1,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "list_query_365d_page1",
+      "execution_time_ms": 53.91,
+      "memory_usage_mb": 0.94,
+      "result_count": 955,
+      "error": null,
+      "run": 1,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "list_query_30d_page5",
+      "execution_time_ms": 4.39,
+      "memory_usage_mb": 0.0,
+      "result_count": 0,
+      "error": null,
+      "run": 1,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "status_filter_CONFIRMED_90d",
+      "execution_time_ms": 2.97,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 1,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "status_filter_USED_90d",
+      "execution_time_ms": 1.87,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 1,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "status_filter_CANCELLED_90d",
+      "execution_time_ms": 1.77,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 1,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "venue_filter_60d",
+      "execution_time_ms": 1.12,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 1,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "count_query_30d",
+      "execution_time_ms": 5.54,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 2,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "count_query_90d",
+      "execution_time_ms": 4.64,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 2,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "count_query_365d",
+      "execution_time_ms": 14.15,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 2,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "list_query_30d_page1",
+      "execution_time_ms": 5.4,
+      "memory_usage_mb": 0.0,
+      "result_count": 87,
+      "error": null,
+      "run": 2,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "list_query_90d_page1",
+      "execution_time_ms": 6.11,
+      "memory_usage_mb": 0.0,
+      "result_count": 243,
+      "error": null,
+      "run": 2,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "list_query_365d_page1",
+      "execution_time_ms": 39.48,
+      "memory_usage_mb": 0.0,
+      "result_count": 955,
+      "error": null,
+      "run": 2,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "list_query_30d_page5",
+      "execution_time_ms": 4.51,
+      "memory_usage_mb": 0.0,
+      "result_count": 0,
+      "error": null,
+      "run": 2,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "status_filter_CONFIRMED_90d",
+      "execution_time_ms": 3.0,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 2,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "status_filter_USED_90d",
+      "execution_time_ms": 1.82,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 2,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "status_filter_CANCELLED_90d",
+      "execution_time_ms": 1.52,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 2,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "venue_filter_60d",
+      "execution_time_ms": 0.98,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 2,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "count_query_30d",
+      "execution_time_ms": 5.14,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 3,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "count_query_90d",
+      "execution_time_ms": 4.88,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 3,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "count_query_365d",
+      "execution_time_ms": 14.32,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 3,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "list_query_30d_page1",
+      "execution_time_ms": 5.23,
+      "memory_usage_mb": 0.0,
+      "result_count": 87,
+      "error": null,
+      "run": 3,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "list_query_90d_page1",
+      "execution_time_ms": 6.95,
+      "memory_usage_mb": 0.0,
+      "result_count": 243,
+      "error": null,
+      "run": 3,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "list_query_365d_page1",
+      "execution_time_ms": 15.57,
+      "memory_usage_mb": 0.14,
+      "result_count": 955,
+      "error": null,
+      "run": 3,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "list_query_30d_page5",
+      "execution_time_ms": 3.76,
+      "memory_usage_mb": 0.0,
+      "result_count": 0,
+      "error": null,
+      "run": 3,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "status_filter_CONFIRMED_90d",
+      "execution_time_ms": 2.96,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 3,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "status_filter_USED_90d",
+      "execution_time_ms": 1.8,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 3,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "status_filter_CANCELLED_90d",
+      "execution_time_ms": 1.66,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 3,
+      "database": "timescaledb"
+    },
+    {
+      "query_name": "venue_filter_60d",
+      "execution_time_ms": 1.16,
+      "memory_usage_mb": 0.0,
+      "result_count": 1,
+      "error": null,
+      "run": 3,
+      "database": "timescaledb"
+    }
+  ]
+}

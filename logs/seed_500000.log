@@ -1,0 +1,66 @@
+2025-11-24 18:32:57,952 - [INFO] ======================================================================
+2025-11-24 18:32:57,952 - [INFO] TimescaleDB Large Dataset Seed Script
+2025-11-24 18:32:57,952 - [INFO] ======================================================================
+2025-11-24 18:32:57,952 - [INFO] Connecting to PostgreSQL...
+2025-11-24 18:32:57,961 - [INFO] Connecting to TimescaleDB...
+2025-11-24 18:32:57,969 - [INFO] Loading existing base data from PostgreSQL...
+2025-11-24 18:32:57,975 - [INFO] Loaded 418 users
+2025-11-24 18:32:57,978 - [INFO] Loaded 969 offerers
+2025-11-24 18:32:57,980 - [INFO] Loaded 1008 venues
+2025-11-24 18:32:57,987 - [INFO] Loaded 2136 offers
+2025-11-24 18:32:58,000 - [INFO] Loaded 5525 stocks
+2025-11-24 18:32:58,000 - [INFO] Target: 500,000 bookings | Batch size: 10,000
+2025-11-24 18:32:58,377 - [INFO] Bookings generation: 10,000/500,000 (2.0%) - Rate: 26516/s - ETA: 0:00:18
+2025-11-24 18:32:58,754 - [INFO] Bookings generation: 20,000/500,000 (4.0%) - Rate: 26520/s - ETA: 0:00:18
+2025-11-24 18:32:59,129 - [INFO] Bookings generation: 30,000/500,000 (6.0%) - Rate: 26566/s - ETA: 0:00:17
+2025-11-24 18:32:59,530 - [INFO] Bookings generation: 40,000/500,000 (8.0%) - Rate: 26150/s - ETA: 0:00:17
+2025-11-24 18:32:59,896 - [INFO] Bookings generation: 50,000/500,000 (10.0%) - Rate: 26367/s - ETA: 0:00:17
+2025-11-24 18:33:00,280 - [INFO] Bookings generation: 60,000/500,000 (12.0%) - Rate: 26318/s - ETA: 0:00:16
+2025-11-24 18:33:00,644 - [INFO] Bookings generation: 70,000/500,000 (14.0%) - Rate: 26479/s - ETA: 0:00:16
+2025-11-24 18:33:01,036 - [INFO] Bookings generation: 80,000/500,000 (16.0%) - Rate: 26354/s - ETA: 0:00:15
+2025-11-24 18:33:01,425 - [INFO] Bookings generation: 90,000/500,000 (18.0%) - Rate: 26278/s - ETA: 0:00:15
+2025-11-24 18:33:01,797 - [INFO] Bookings generation: 100,000/500,000 (20.0%) - Rate: 26340/s - ETA: 0:00:15
+2025-11-24 18:33:02,190 - [INFO] Bookings generation: 110,000/500,000 (22.0%) - Rate: 26254/s - ETA: 0:00:14
+2025-11-24 18:33:02,562 - [INFO] Bookings generation: 120,000/500,000 (24.0%) - Rate: 26303/s - ETA: 0:00:14
+2025-11-24 18:33:02,952 - [INFO] Bookings generation: 130,000/500,000 (26.0%) - Rate: 26253/s - ETA: 0:00:14
+2025-11-24 18:33:03,333 - [INFO] Bookings generation: 140,000/500,000 (28.0%) - Rate: 26252/s - ETA: 0:00:13
+2025-11-24 18:33:03,740 - [INFO] Bookings generation: 150,000/500,000 (30.0%) - Rate: 26132/s - ETA: 0:00:13
+2025-11-24 18:33:04,142 - [INFO] Bookings generation: 160,000/500,000 (32.0%) - Rate: 26050/s - ETA: 0:00:13
+2025-11-24 18:33:04,522 - [INFO] Bookings generation: 170,000/500,000 (34.0%) - Rate: 26065/s - ETA: 0:00:12
+2025-11-24 18:33:04,916 - [INFO] Bookings generation: 180,000/500,000 (36.0%) - Rate: 26026/s - ETA: 0:00:12
+2025-11-24 18:33:05,322 - [INFO] Bookings generation: 190,000/500,000 (38.0%) - Rate: 25950/s - ETA: 0:00:11
+2025-11-24 18:33:05,730 - [INFO] Bookings generation: 200,000/500,000 (40.0%) - Rate: 25875/s - ETA: 0:00:11
+2025-11-24 18:33:06,117 - [INFO] Bookings generation: 210,000/500,000 (42.0%) - Rate: 25872/s - ETA: 0:00:11
+2025-11-24 18:33:06,517 - [INFO] Bookings generation: 220,000/500,000 (44.0%) - Rate: 25831/s - ETA: 0:00:10
+2025-11-24 18:33:06,928 - [INFO] Bookings generation: 230,000/500,000 (46.0%) - Rate: 25761/s - ETA: 0:00:10
+2025-11-24 18:33:07,325 - [INFO] Bookings generation: 240,000/500,000 (48.0%) - Rate: 25739/s - ETA: 0:00:10
+2025-11-24 18:33:07,736 - [INFO] Bookings generation: 250,000/500,000 (50.0%) - Rate: 25677/s - ETA: 0:00:09
+2025-11-24 18:33:08,152 - [INFO] Bookings generation: 260,000/500,000 (52.0%) - Rate: 25612/s - ETA: 0:00:09
+2025-11-24 18:33:08,559 - [INFO] Bookings generation: 270,000/500,000 (54.0%) - Rate: 25571/s - ETA: 0:00:08
+2025-11-24 18:33:08,961 - [INFO] Bookings generation: 280,000/500,000 (56.0%) - Rate: 25545/s - ETA: 0:00:08
+2025-11-24 18:33:09,380 - [INFO] Bookings generation: 290,000/500,000 (58.0%) - Rate: 25484/s - ETA: 0:00:08
+2025-11-24 18:33:09,775 - [INFO] Bookings generation: 300,000/500,000 (60.0%) - Rate: 25477/s - ETA: 0:00:07
+2025-11-24 18:33:10,195 - [INFO] Bookings generation: 310,000/500,000 (62.0%) - Rate: 25421/s - ETA: 0:00:07
+2025-11-24 18:33:10,614 - [INFO] Bookings generation: 320,000/500,000 (64.0%) - Rate: 25369/s - ETA: 0:00:07
+2025-11-24 18:33:11,011 - [INFO] Bookings generation: 330,000/500,000 (66.0%) - Rate: 25364/s - ETA: 0:00:06
+2025-11-24 18:33:11,430 - [INFO] Bookings generation: 340,000/500,000 (68.0%) - Rate: 25317/s - ETA: 0:00:06
+2025-11-24 18:33:11,837 - [INFO] Bookings generation: 350,000/500,000 (70.0%) - Rate: 25295/s - ETA: 0:00:05
+2025-11-24 18:33:12,253 - [INFO] Bookings generation: 360,000/500,000 (72.0%) - Rate: 25258/s - ETA: 0:00:05
+2025-11-24 18:33:12,656 - [INFO] Bookings generation: 370,000/500,000 (74.0%) - Rate: 25245/s - ETA: 0:00:05
+2025-11-24 18:33:13,070 - [INFO] Bookings generation: 380,000/500,000 (76.0%) - Rate: 25217/s - ETA: 0:00:04
+2025-11-24 18:33:13,478 - [INFO] Bookings generation: 390,000/500,000 (78.0%) - Rate: 25197/s - ETA: 0:00:04
+2025-11-24 18:33:13,899 - [INFO] Bookings generation: 400,000/500,000 (80.0%) - Rate: 25159/s - ETA: 0:00:03
+2025-11-24 18:33:14,357 - [INFO] Bookings generation: 410,000/500,000 (82.0%) - Rate: 25066/s - ETA: 0:00:03
+2025-11-24 18:33:14,754 - [INFO] Bookings generation: 420,000/500,000 (84.0%) - Rate: 25069/s - ETA: 0:00:03
+2025-11-24 18:33:15,180 - [INFO] Bookings generation: 430,000/500,000 (86.0%) - Rate: 25030/s - ETA: 0:00:02
+2025-11-24 18:33:15,586 - [INFO] Bookings generation: 440,000/500,000 (88.0%) - Rate: 25020/s - ETA: 0:00:02
+2025-11-24 18:33:16,059 - [INFO] Bookings generation: 450,000/500,000 (90.0%) - Rate: 24919/s - ETA: 0:00:02
+2025-11-24 18:33:16,500 - [INFO] Bookings generation: 460,000/500,000 (92.0%) - Rate: 24866/s - ETA: 0:00:01
+2025-11-24 18:33:16,896 - [INFO] Bookings generation: 470,000/500,000 (94.0%) - Rate: 24874/s - ETA: 0:00:01
+2025-11-24 18:33:17,310 - [INFO] Bookings generation: 480,000/500,000 (96.0%) - Rate: 24858/s - ETA: 0:00:00
+2025-11-24 18:33:17,706 - [INFO] Bookings generation: 490,000/500,000 (98.0%) - Rate: 24866/s - ETA: 0:00:00
+2025-11-24 18:33:18,131 - [INFO] Bookings generation: 500,000/500,000 (100.0%) - Rate: 24838/s - ETA: 0:00:00
+2025-11-24 18:33:18,131 - [INFO] ✓ Successfully inserted 500,000 bookings
+2025-11-24 18:33:18,132 - [INFO] ======================================================================
+2025-11-24 18:33:18,132 - [INFO] ✓ Seeding completed successfully!
+2025-11-24 18:33:18,132 - [INFO] ======================================================================
