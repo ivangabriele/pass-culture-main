@@ -140,8 +140,7 @@ EOF
 
         git remote add origin "$(git -C "$REPO_ROOT" remote get-url origin 2>/dev/null || echo "origin-not-set")"
 
-        git push --force --all origin
-        git push --force --tags origin
+        git push --force origin master
 
         log "Push complete."
     else
