@@ -14,7 +14,7 @@ flowchart LR
         U[master branch]
     end
 
-    subgraph workflow["GitHub Actions (every 6h)"]
+    subgraph workflow["GitHub Actions (manual trigger)"]
         direction TB
         A[Clone upstream] --> B[Rewrite authorship]
         B --> C[Force-push]
@@ -27,21 +27,23 @@ flowchart LR
 
     U --> A
     C --> M
-    S -.->|triggers| workflow
+    S -.->|workflow_dispatch| workflow
 ```
 
-The workflow:
+The workflow (manually triggered from `_sync` branch):
 1. Clones the upstream repository
 2. Rewrites author/committer info using `git-filter-repo` and mailmap
 3. Rewrites `Co-authored-by` trailers in commit messages
 4. Force-pushes to the `master` branch
 
+> **Note**: `master` is the default branch (for GitHub contribution counting). The workflow lives on `_sync` and must be triggered manually.
+
 ## Repository Structure
 
 | Branch | Purpose |
 |--------|---------|
-| `master` | Mirror of upstream with rewritten authorship |
-| `_sync` (default) | Sync tooling, workflow, and documentation |
+| `master` (default) | Mirror of upstream with rewritten authorship |
+| `_sync` | Sync tooling, workflow, and documentation |
 
 ## To View the Code
 
