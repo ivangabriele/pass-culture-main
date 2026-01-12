@@ -1,15 +1,14 @@
 name: Sync
 
 on:
-  push:
-    branches:
-      - _sync
   schedule:
     - cron: '0 */6 * * *'
   workflow_dispatch:
 
 jobs:
   sync:
+    name: Sync
+    if: github.ref == 'refs/heads/_sync'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout _sync branch
