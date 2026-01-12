@@ -1,8 +1,11 @@
-name: Sync and Rewrite Commits
+name: Sync
 
 on:
+  push:
+    branches:
+      - _sync
   schedule:
-    - cron: '18 2 * * *'
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 permissions:
